@@ -29,7 +29,7 @@ public class AllocationAlertEvaluatorTests
         Assert.Equal(AlertKind.AboveMaximum, alert.Kind);
         Assert.Equal(45m, alert.ActualPercentage);
         Assert.Equal(30m, alert.LimitPercentage);
-        Assert.Contains("prudent", alert.Message);
+        Assert.Equal("Actions : 45 % du portefeuille, au-dessus du maximum de 30 % pour un profil prudent.", alert.Message);
     }
 
     [Fact]

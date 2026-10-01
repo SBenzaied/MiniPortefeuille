@@ -27,7 +27,8 @@ public sealed record AllocationAlert(
 /// </remarks>
 public static class AllocationAlertEvaluator
 {
-    private static readonly CultureInfo French = CultureInfo.GetCultureInfo("fr-CH");
+    // Point décimal, comme dans les montants affichés par le front (convention suisse).
+    private static readonly CultureInfo NumberFormat = CultureInfo.InvariantCulture;
 
     public static IReadOnlyList<AllocationAlert> Evaluate(RiskProfile profile, PortfolioValuation valuation)
     {
@@ -56,7 +57,7 @@ public static class AllocationAlertEvaluator
         return alerts;
     }
 
-    private static string Format(decimal percentage) => percentage.ToString("0.##", French) + " %";
+    private static string Format(decimal percentage) => percentage.ToString("0.##", NumberFormat) + " %";
 
     private static string Label(AssetClass assetClass) => assetClass switch
     {
