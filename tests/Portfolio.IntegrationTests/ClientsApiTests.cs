@@ -118,6 +118,24 @@ public class ClientsApiTests(PortfolioApiFactory factory) : IClassFixture<Portfo
     }
 
     [Fact]
+    public async Task Portfolio_can_be_exported_as_csv_by_its_advisor_only()
+    {
+        var alice = await factory.CreateAuthenticatedClientAsync("amartin");
+        var bruno = await factory.CreateAuthenticatedClientAsync("bnguyen");
+        var rochat = (await ListAsync(alice)).Single(c => c.Name == "Jean Rochat");
+
+        var response = await alice.GetAsync($"/api/clients/{rochat.Id}/export.csv?currency=CHF");
+        var forbidden = await bruno.GetAsync($"/api/clients/{rochat.Id}/export.csv");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/csv", response.Content.Headers.ContentType!.MediaType);
+        var csv = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Apple Inc.;Equities;120;215;USD;25800;20640", csv);
+        Assert.Contains("Total;;;;;;73510", csv);
+        Assert.Equal(HttpStatusCode.NotFound, forbidden.StatusCode);
+    }
+
+    [Fact]
     public async Task Empty_portfolio_is_valued_at_zero_without_alert()
     {
         var bruno = await factory.CreateAuthenticatedClientAsync("bnguyen");
