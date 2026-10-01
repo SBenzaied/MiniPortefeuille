@@ -8,7 +8,7 @@ Exercice technique réalisé pour le poste de Développeur IT (.NET / React) che
 Toutes les données sont fictives.
 
 **Stack** : .NET 10 · ASP.NET Core · EF Core 10 · PostgreSQL 17 · React 19 + TypeScript · Vite ·
-Recharts · xUnit · Vitest + Testing Library · Docker Compose · GitHub Actions
+NUnit + Moq · Vitest + Testing Library · Docker Compose · GitHub Actions
 
 ---
 
@@ -59,11 +59,97 @@ dotnet test
 npm --prefix src/web test
 ```
 
+### Déploiement sur Render
+
+Le fichier [`render.yaml`](render.yaml) décrit le déploiement (Blueprint Render) :
+
+- une base **PostgreSQL** gérée, joignable uniquement depuis le réseau privé de Render ;
+- un **service web Docker** construit depuis le [`Dockerfile`](Dockerfile) racine. Cette image
+  embarque le front compilé : l'API le sert elle-même, d'où une seule URL publique, sans CORS ni
+  proxy entre services. Docker compose garde son architecture nginx + API + PostgreSQL.
+
+Mise en place : sur Render, **New > Blueprint**, puis choisir ce dépôt. Aucun secret à saisir :
+la clé JWT est générée par Render (`generateValue`) et la chaîne de connexion vient de la base.
+Au premier démarrage, l'API applique les migrations et charge le jeu d'essai fictif ; les
+comptes de démonstration ci-dessus fonctionnent alors à l'adresse fournie par Render.
+
+Points d'adaptation :
+
+- Render fournit une URL `postgres://…`, que Npgsql ne lit pas ; `PostgresConnectionString` la
+  convertit (les chaînes `Host=…` classiques restent acceptées).
+- Derrière le proxy de Render, l'API lit l'adresse du client dans `X-Forwarded-For`
+  (`ReverseProxy__TrustForwardedHeaders`), pour que la limite de connexions s'applique par client.
+- Sur l'offre gratuite, le service se met en veille après une période d'inactivité (premier accès
+  plus lent) et la base gratuite a une durée de vie limitée.
+
+### Serveur MCP : connecter Claude
+
+`src/Portfolio.Mcp` est un serveur [MCP](https://modelcontextprotocol.io) (SDK C# officiel) qui
+donne à Claude un accès **en lecture seule** aux portefeuilles d'un conseiller. Il appelle l'API
+REST avec les identifiants de ce conseiller, comme le front : le cloisonnement et la validation
+restent ceux de l'API, et il ne touche jamais la base.
+
+| Outil | Rôle |
+|---|---|
+| `lister_clients` | Clients du conseiller, filtrables par profil (Prudent, Équilibré, Dynamique) |
+| `consulter_client` | Fiche d'un client et détail de ses positions |
+| `valoriser_portefeuille` | Valeur totale dans une devise, répartition face aux bornes du profil, alertes |
+| `clients_hors_profil` | Clients en alerte, avec le détail de chaque écart |
+| `lister_devises` | Devises disponibles et taux fixes vers le CHF |
+
+Configuration (variables d'environnement) : `PortfolioApi__BaseUrl` (par défaut
+`http://localhost:5215`), `PortfolioApi__UserName` (par défaut `amartin`) et
+`PortfolioApi__Password`, jamais versionné.
+
+**En local (stdio), avec Claude Desktop ou Claude Code.** L'API doit tourner (voir « Sans
+Docker »). Publier le serveur une fois, puis pointer le client sur la DLL :
+
+```bash
+dotnet publish src/Portfolio.Mcp -c Release -o publish/mcp
+```
+
+Claude Desktop, fichier `claude_desktop_config.json` (chemin absolu vers le dépôt) :
+
+```json
+{
+  "mcpServers": {
+    "mini-portefeuille": {
+      "command": "dotnet",
+      "args": ["C:/chemin/vers/MiniPortefeuille/publish/mcp/Portfolio.Mcp.dll", "--stdio"],
+      "env": { "PortfolioApi__Password": "Demo-2026!" }
+    }
+  }
+}
+```
+
+Claude Code :
+
+```bash
+claude mcp add mini-portefeuille --env PortfolioApi__Password=Demo-2026! -- dotnet ./publish/mcp/Portfolio.Mcp.dll --stdio
+```
+
+**À distance (HTTP), par exemple sur claude.ai.** Le service `mini-portefeuille-mcp` de
+`render.yaml` expose `POST /mcp`, protégé par une clé (`Mcp__AccessKey`, générée avec
+`openssl rand -hex 32`). Après le déploiement, renseigner sur Render l'URL publique de l'API, le
+mot de passe du conseiller et la clé, puis :
+
+- claude.ai : *Paramètres > Connecteurs > Ajouter un connecteur personnalisé*, URL
+  `https://<service-mcp>.onrender.com/mcp?key=<clé>` ;
+- Claude Code :
+
+```bash
+claude mcp add --transport http mini-portefeuille https://<service-mcp>.onrender.com/mcp --header "Authorization: Bearer <clé>"
+```
+
+La clé protège l'accès mais reste un secret partagé : elle convient à ces données fictives. Pour
+de vraies données, il faudrait une authentification OAuth par conseiller.
+
 ---
 
 ## Captures d'écran
 
-**Fiche client** : alerte de répartition, valeur totale, graphique, tableau triable.
+**Fiche client** : valeur totale, répartition face aux bornes du profil (écart hachuré et chiffré),
+tableau des positions triable.
 
 ![Fiche client](docs/screenshots/03-fiche-client.png)
 
@@ -104,8 +190,9 @@ déclenche pas d'alerte.
 | Dynamique | ≥ 50 % | ≤ 25 % | |
 
 Les valeurs sont volontairement simples et vivent dans un seul fichier
-(`src/Portfolio.Domain/Alerts/AllocationPolicy.cs`). Dans un vrai contexte, elles viendraient de
-la politique d'investissement et seraient paramétrables.
+(`src/Portfolio.Domain/Alerts/FixedAllocationPolicy.cs`), derrière l'interface `IAllocationPolicy`.
+Dans un vrai contexte, elles viendraient de la politique d'investissement : il suffirait
+d'enregistrer une autre implémentation (un test d'intégration le fait).
 
 ---
 
@@ -115,29 +202,76 @@ la politique d'investissement et seraient paramétrables.
 src/
   Portfolio.Domain          Entités, calcul de valorisation, règles d'alerte. Aucune dépendance.
   Portfolio.Application     Cas d'usage (clients, positions, authentification), validation, DTO.
-                            Accède aux données via le port IPortfolioDbContext.
+                            Déclare les ports (IPortfolioDbContext, IExchangeRateProvider,
+                            ICurrentAdvisor) implémentés par les couches externes.
   Portfolio.Infrastructure  EF Core (PostgreSQL ou SQLite), migrations, jeu d'essai.
   Portfolio.Api             Contrôleurs REST, JWT, ProblemDetails, limitation des connexions.
+  Portfolio.Mcp             Serveur MCP (stdio et HTTP) pour Claude, client de l'API REST.
   web/                      Front React + TypeScript (Vite), servi par nginx en conteneur.
 tests/
-  Portfolio.UnitTests         Valorisation, change, alertes, validation, export CSV.
-  Portfolio.IntegrationTests  API complète en mémoire (WebApplicationFactory + SQLite).
+  Portfolio.UnitTests         NUnit + Moq. Règles (valorisation, change, alertes, validation,
+                              export CSV) et services avec leurs dépendances simulées.
+  Portfolio.IntegrationTests  NUnit. API complète en mémoire (WebApplicationFactory + SQLite).
 ```
 
 Dépendances : `Api → Infrastructure → Application → Domain`.
 
+### Injection de dépendances
+
+Chaque composant qui porte un comportement est exposé par une interface et reçoit ses
+dépendances par son constructeur. Le conteneur d'ASP.NET Core assemble le tout ; personne
+n'instancie lui-même un service ni n'appelle une méthode statique métier.
+
+| Interface | Implémentation | Couche (implémentation) | Durée de vie |
+|---|---|---|---|
+| `IPortfolioValuator` | `PortfolioValuator` | Domain | Singleton |
+| `IAllocationPolicy` | `FixedAllocationPolicy` | Domain | Singleton |
+| `IAllocationAlertEvaluator` | `AllocationAlertEvaluator` (reçoit `IAllocationPolicy`) | Domain | Singleton |
+| `IPositionValidator` | `PositionValidator` | Application | Singleton |
+| `IPortfolioExporter` | `PortfolioCsvExporter` | Application | Singleton |
+| `IAuthService`, `IClientService`, `IPositionService`, `ICurrencyService` | `AuthService`, `ClientService`… | Application | Scoped |
+| `IPortfolioDbContext` | `PortfolioDbContext` (EF Core) | Infrastructure | Scoped |
+| `IExchangeRateProvider` | `DbExchangeRateProvider` | Infrastructure | Scoped |
+| `IDatabaseSeeder` | `DemoDataSeeder` | Infrastructure | Scoped |
+| `ICurrentAdvisor` | `HttpCurrentAdvisor` (claim `sub` du jeton) | Api | Scoped |
+| `ITokenIssuer` | `JwtTokenIssuer` | Api | Singleton |
+| `TimeProvider`, `IPasswordHasher<Advisor>` | fournis par .NET | — | Singleton |
+| `IPortfolioApiClient` | `PortfolioApiClient` (client HTTP typé + `AdvisorAuthenticationHandler`) | Mcp | Transient |
+| `IAdvisorTokenProvider` | `AdvisorTokenProvider` (jeton du conseiller en cache) | Mcp | Singleton |
+
+- **Inversion des dépendances.** Les interfaces dont l'application a besoin (`IPortfolioDbContext`,
+  `IExchangeRateProvider`, `ICurrentAdvisor`) sont déclarées dans `Portfolio.Application` et
+  implémentées dans les couches externes. L'application ne connaît ni EF Core ni HTTP.
+- **Durées de vie.** Singleton pour ce qui est sans état, scoped (une instance par requête) pour
+  ce qui dépend de la base ou du conseiller connecté. `ValidateScopes` et `ValidateOnBuild` sont
+  activés : un singleton qui capturerait un service scoped, ou un service impossible à
+  construire, fait échouer le démarrage plutôt que la première requête.
+- **Enregistrement par couche.** `AddApplication()` et `AddInfrastructure()` regroupent les
+  enregistrements de chaque projet ; `Program.cs` n'ajoute que ceux de l'API.
+- **Substitution en test (NUnit + Moq).** Les tests unitaires construisent chaque service à la
+  main en lui passant des mocks Moq de ses interfaces : `ClientService` avec un conseiller, un
+  fournisseur de taux, une valorisation, une politique et un évaluateur simulés ;
+  `PositionService` avec un validateur et une horloge (`TimeProvider`) simulés ; `AuthService`
+  avec un hacheur simulé. Les tests vérifient ce que le service transmet à ses dépendances
+  (`Verify`) et qu'il n'appelle rien d'inutile (`VerifyNoOtherCalls`, par exemple aucun calcul
+  pour le client d'un autre conseiller). Seul le DbContext reste réel (SQLite en mémoire) : les
+  requêtes EF Core ne se simulent pas fidèlement. Un test d'intégration remplace aussi
+  `IAllocationPolicy` dans le conteneur par un mock (`ConfigureTestServices`) et vérifie que les
+  alertes changent sans toucher aux services.
+
 ### Choix et raisons
 
-- **Le calcul de valorisation est une fonction pure** (`PortfolioValuator.Value`). Il reçoit des
-  positions et une table de taux, et ne dépend ni de la base ni de l'horloge. Les tests portent
-  sur cette fonction sans aucune infrastructure.
+- **Le calcul de valorisation est sans état** (`IPortfolioValuator`). Il reçoit des positions
+  et une table de taux, et ne dépend ni de la base ni de l'horloge. Les tests portent sur ce
+  calcul sans aucune infrastructure.
 - **Précision monétaire.** Tout est en `decimal`. La conversion passe toujours par le CHF
   (`montant × taux source ÷ taux cible`). On arrondit une seule fois, à la fin, à 2 décimales
   (au plus proche, 0.5 vers l'extérieur). Arrondir position par position fausserait les totaux.
   Conséquence assumée : trois tiers s'affichent 33.33 % chacun, soit 99.99 % au total.
   Les quantités et les prix sont stockés en `numeric(18,6)` et les taux en `numeric(18,8)`.
 - **Cloisonnement par conseiller dans chaque requête.** L'identifiant du conseiller vient
-  uniquement du claim `sub` du jeton, jamais de l'URL ni du corps de la requête. Un client d'un
+  uniquement du claim `sub` du jeton (via `ICurrentAdvisor`, injecté dans les services), jamais
+  de l'URL ni du corps de la requête. Un client d'un
   autre conseiller renvoie **404 et non 403**, pour ne pas confirmer qu'il existe. Une position
   doit aussi appartenir au client de l'URL. J'ai préféré des filtres explicites et testés à un
   filtre global EF, qui est plus discret mais plus facile à contourner sans s'en rendre compte
@@ -158,9 +292,15 @@ Dépendances : `Api → Infrastructure → Application → Domain`.
   avec le modèle (`has-pending-model-changes`).
 - **Front.** L'état reste local aux pages, avec un petit hook `useAsync` qui ignore les réponses
   périmées. Je n'ai pas ajouté de librairie d'état : il n'y a pas d'état partagé hormis la
-  session. Le filtre de profil vit dans l'URL. La fiche client, qui embarque Recharts, est
-  chargée à la demande. Le graphique a une légende chiffrée qui sert aussi de tableau : la
-  couleur n'est jamais la seule information.
+  session. Le filtre de profil vit dans l'URL. La fiche client est chargée à la demande.
+- **Répartition face au profil.** Chaque classe d'actifs est une barre à l'échelle sur un axe
+  0–100 % commun, posée sur la plage autorisée par le profil ; la part hors plage est hachurée.
+  Les bornes viennent de l'API (`limits` dans la valorisation), pas d'une copie côté front.
+  Chaque ligne porte aussi la borne, l'écart en points, le montant et la part en texte : la
+  couleur n'est jamais la seule information. Dessiné en HTML/CSS, sans librairie de graphiques.
+- **Interface.** Codes couleurs de Piguet Galland (pétrole, pêche, citron vert), police Hanken
+  Grotesk auto-hébergée (la CSP n'autorise aucune ressource externe), thèmes clair et sombre
+  selon le système. La suppression d'une position se confirme dans la ligne du tableau.
 
 ---
 
@@ -192,7 +332,9 @@ Dépendances : `Api → Infrastructure → Application → Domain`.
    d'intégration (résultats et couverture publiés en artefacts).
 2. **Front** : `npm ci`, lint (oxlint), contrôle de types, tests Vitest, build.
 3. **Docker** : construction des images, `docker compose up`, puis test de fumée à travers nginx
-   (connexion, liste des clients, page d'accueil), puis `docker compose down`.
+   (connexion, liste des clients, page d'accueil), puis `docker compose down`. L'image Render
+   (front servi par l'API) est aussi construite et testée : page d'accueil, route du front,
+   connexion.
 
 ---
 
@@ -227,9 +369,10 @@ erreurs et le comportement à l'expiration de la session.
 - **Jeton en `sessionStorage`** : il est lisible par du JavaScript injecté en cas de faille XSS.
   La CSP limite ce risque, mais un cookie `HttpOnly` + `SameSite` serait préférable en production.
   Il n'y a pas de jeton de rafraîchissement : la session expire au bout de 60 minutes.
-- **Limitation des connexions derrière nginx** : l'API voit l'adresse du proxy, donc la limite
-  porte sur tous les utilisateurs ensemble. Il faudrait `ForwardedHeaders` en ne faisant
-  confiance qu'au proxy.
+- **Confiance accordée au proxy** : derrière nginx ou Render, l'API lit l'adresse du client
+  dans `X-Forwarded-For` (dernière adresse seulement). C'est sûr tant que l'API n'est joignable
+  que par ce proxy, ce qui est le cas dans les deux déploiements ; exposée directement, il
+  faudrait désactiver `ReverseProxy:TrustForwardedHeaders`.
 - **Tests d'intégration sur SQLite**, pas sur PostgreSQL. Le comportement SQL réel (types,
   collation) n'est couvert que par le test de fumée Docker en CI.
 - **La liste des clients charge leurs positions** pour afficher valeur et alertes. C'est adapté à
@@ -244,6 +387,6 @@ erreurs et le comportement à l'expiration de la session.
 1. Tests d'intégration sur un vrai PostgreSQL via Testcontainers.
 2. Jeton de concurrence (`xmin` PostgreSQL) sur les positions, avec 409 côté API.
 3. Écran d'historique des modifications (journal d'audit) et historique de valorisation.
-4. Cookie `HttpOnly`, jeton de rafraîchissement, `ForwardedHeaders`.
-5. Publication des images sur GHCR et déploiement sur un hébergement gratuit.
+4. Cookie `HttpOnly` et jeton de rafraîchissement.
+5. Publication des images sur GHCR.
 6. Politique d'allocation paramétrable par la banque plutôt que codée.

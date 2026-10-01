@@ -98,9 +98,33 @@ jobs:
           curl -fsS http://localhost:8080/api/clients -H "Authorization: Bearer $TOKEN" | jq -e 'length == 4'
           curl -fsS http://localhost:8080/ | grep -q '<div id="root">'
 
+      - name: Image Render (front servi par l'API) + test de fumée
+        run: |
+          docker build -t mini-portefeuille-render .
+          docker run -d --name render-smoke -p 8090:8080 \
+            -e Database__Provider=Sqlite \
+            -e ConnectionStrings__Portfolio="Data Source=/tmp/portfolio.db" \
+            -e Database__SeedDemoData=true \
+            -e Jwt__SigningKey="$(openssl rand -base64 48)" \
+            mini-portefeuille-render
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8090/health && break
+            sleep 2
+          done
+          curl -fsS http://localhost:8090/ | grep -q '<div id="root">'
+          curl -fsS http://localhost:8090/clients/2 | grep -q '<div id="root">'
+          curl -fsS -X POST http://localhost:8090/api/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"userName":"amartin","password":"Demo-2026!"}' | jq -e '.accessToken | length > 0'
+
+      - name: Image du serveur MCP
+        run: docker build -f src/Portfolio.Mcp/Dockerfile -t mini-portefeuille-mcp .
+
       - name: Journaux en cas d'échec
         if: failure()
-        run: docker compose logs
+        run: |
+          docker compose logs
+          docker logs render-smoke || true
 
       - name: Arrêt
         if: always()

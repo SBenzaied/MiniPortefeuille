@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { BrandMark, Icon } from './Icon'
 
 export function Layout() {
   const { advisor, logout } = useAuth()
@@ -7,17 +8,21 @@ export function Layout() {
   return (
     <div className="app">
       <header className="app-header">
-        <Link to="/clients" className="brand">
-          Mini-portefeuille
-        </Link>
-        {advisor && (
-          <div className="session">
-            <span>{advisor.displayName}</span>
-            <button type="button" className="secondary small" onClick={logout}>
-              Se déconnecter
-            </button>
-          </div>
-        )}
+        <div className="app-header-inner">
+          <Link to="/clients" className="brand">
+            <BrandMark />
+            Mini-portefeuille
+          </Link>
+          {advisor && (
+            <div className="session">
+              <span className="session-name">{advisor.displayName}</span>
+              <button type="button" className="button on-band" onClick={logout}>
+                <Icon name="logout" />
+                Se déconnecter
+              </button>
+            </div>
+          )}
+        </div>
       </header>
       <main className="app-main">
         <Outlet />

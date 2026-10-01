@@ -12,11 +12,19 @@ namespace Portfolio.Application.Positions;
 /// client appartient au conseiller connecté, puis enregistre une entrée d'audit dans la même
 /// transaction que la modification.
 /// </summary>
-public sealed class PositionService(IPortfolioDbContext db, TimeProvider clock)
+/// <remarks>
+/// L'horloge (<see cref="TimeProvider"/>) est injectée elle aussi : les tests peuvent figer la
+/// date des entrées d'audit.
+/// </remarks>
+public sealed class PositionService(
+    IPortfolioDbContext db,
+    ICurrentAdvisor advisor,
+    IPositionValidator validator,
+    TimeProvider clock) : IPositionService
 {
-    public async Task<Result<PositionDto>> CreateAsync(int advisorId, int clientId, PositionRequest? request, CancellationToken ct = default)
+    public async Task<Result<PositionDto>> CreateAsync(int clientId, PositionRequest? request, CancellationToken ct = default)
     {
-        if (!await OwnsClientAsync(advisorId, clientId, ct))
+        if (!await OwnsClientAsync(clientId, ct))
         {
             return Result<PositionDto>.NotFound();
         }
@@ -42,16 +50,16 @@ public sealed class PositionService(IPortfolioDbContext db, TimeProvider clock)
         db.Positions.Add(position);
         await db.SaveChangesAsync(ct);
 
-        Audit(advisorId, position, AuditAction.Created, before: null, after: Snapshot(position));
+        Audit(position, AuditAction.Created, before: null, after: Snapshot(position));
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
         return Result<PositionDto>.Ok(PositionDto.From(position));
     }
 
-    public async Task<Result<PositionDto>> UpdateAsync(int advisorId, int clientId, int positionId, PositionRequest? request, CancellationToken ct = default)
+    public async Task<Result<PositionDto>> UpdateAsync(int clientId, int positionId, PositionRequest? request, CancellationToken ct = default)
     {
-        var position = await FindOwnedPositionAsync(advisorId, clientId, positionId, ct);
+        var position = await FindOwnedPositionAsync(clientId, positionId, ct);
         if (position is null)
         {
             return Result<PositionDto>.NotFound();
@@ -70,22 +78,22 @@ public sealed class PositionService(IPortfolioDbContext db, TimeProvider clock)
         position.UnitPrice = valid.UnitPrice;
         position.CurrencyCode = valid.Currency;
 
-        Audit(advisorId, position, AuditAction.Updated, before, Snapshot(position));
+        Audit(position, AuditAction.Updated, before, Snapshot(position));
         await db.SaveChangesAsync(ct);
 
         return Result<PositionDto>.Ok(PositionDto.From(position));
     }
 
-    public async Task<Result<Unit>> DeleteAsync(int advisorId, int clientId, int positionId, CancellationToken ct = default)
+    public async Task<Result<Unit>> DeleteAsync(int clientId, int positionId, CancellationToken ct = default)
     {
-        var position = await FindOwnedPositionAsync(advisorId, clientId, positionId, ct);
+        var position = await FindOwnedPositionAsync(clientId, positionId, ct);
         if (position is null)
         {
             return Result<Unit>.NotFound();
         }
 
         db.Positions.Remove(position);
-        Audit(advisorId, position, AuditAction.Deleted, Snapshot(position), after: null);
+        Audit(position, AuditAction.Deleted, Snapshot(position), after: null);
         await db.SaveChangesAsync(ct);
 
         return Result<Unit>.Ok(Unit.Value);
@@ -94,21 +102,27 @@ public sealed class PositionService(IPortfolioDbContext db, TimeProvider clock)
     private async Task<(ValidPosition?, IReadOnlyDictionary<string, string[]>)> ValidateAsync(PositionRequest? request, CancellationToken ct)
     {
         var currencies = await db.Currencies.AsNoTracking().Select(c => c.Code).ToListAsync(ct);
-        return PositionValidator.Validate(request, currencies);
+        return validator.Validate(request, currencies);
     }
 
-    private Task<bool> OwnsClientAsync(int advisorId, int clientId, CancellationToken ct) =>
-        db.Clients.AnyAsync(c => c.Id == clientId && c.AdvisorId == advisorId, ct);
+    private Task<bool> OwnsClientAsync(int clientId, CancellationToken ct)
+    {
+        var advisorId = advisor.Id;
+        return db.Clients.AnyAsync(c => c.Id == clientId && c.AdvisorId == advisorId, ct);
+    }
 
-    private Task<Position?> FindOwnedPositionAsync(int advisorId, int clientId, int positionId, CancellationToken ct) =>
-        db.Positions.SingleOrDefaultAsync(
+    private Task<Position?> FindOwnedPositionAsync(int clientId, int positionId, CancellationToken ct)
+    {
+        var advisorId = advisor.Id;
+        return db.Positions.SingleOrDefaultAsync(
             p => p.Id == positionId && p.ClientId == clientId && p.Client!.AdvisorId == advisorId, ct);
+    }
 
-    private void Audit(int advisorId, Position position, AuditAction action, string? before, string? after) =>
+    private void Audit(Position position, AuditAction action, string? before, string? after) =>
         db.PositionAudit.Add(new PositionAuditEntry
         {
             OccurredAt = clock.GetUtcNow(),
-            AdvisorId = advisorId,
+            AdvisorId = advisor.Id,
             ClientId = position.ClientId,
             PositionId = position.Id,
             Action = action,

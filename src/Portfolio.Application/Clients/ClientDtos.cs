@@ -5,13 +5,15 @@ using Portfolio.Domain.Valuation;
 
 namespace Portfolio.Application.Clients;
 
+/// <param name="AlertAssetClasses">Classes d'actifs hors profil, pour nommer l'écart dès la liste.</param>
 public sealed record ClientSummaryDto(
     int Id,
     string Name,
     RiskProfile RiskProfile,
     int PositionCount,
     decimal TotalValueChf,
-    int AlertCount);
+    int AlertCount,
+    IReadOnlyList<AssetClass> AlertAssetClasses);
 
 public sealed record ClientDetailDto(
     int Id,
@@ -35,9 +37,11 @@ public sealed record PositionDto(
         Math.Round(p.MarketValue, PortfolioValuator.AmountDecimals, MidpointRounding.AwayFromZero));
 }
 
+/// <param name="Limits">Bornes du profil de risque du client, pour que le front trace la bande autorisée.</param>
 public sealed record ValuationDto(
     string ReferenceCurrency,
     decimal TotalValue,
     IReadOnlyList<AssetClassAllocation> Allocations,
     IReadOnlyList<PositionValuation> Positions,
-    IReadOnlyList<AllocationAlert> Alerts);
+    IReadOnlyList<AllocationAlert> Alerts,
+    IReadOnlyList<AllocationLimit> Limits);

@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-01T00:00:00Z",
+  "title": "Design System: Mini-portefeuille",
+  "extensions": {
+    "colorMeta": {
+      "paper": { "role": "neutral", "displayName": "Papier pêche", "canonical": "#fdeee1", "darkValue": "#15292f", "tonalRamp": ["#5a4232", "#8a6a52", "#b8957a", "#d9b89c", "#ecd2bb", "#f8e7d5", "#fdeee1", "#fff8f1"] },
+      "paper-deep": { "role": "neutral", "displayName": "Pêche profonde", "canonical": "#f8e7d5", "darkValue": "#1c343a", "tonalRamp": ["#5a4232", "#8a6a52", "#b8957a", "#d9b89c", "#ecd2bb", "#f8e7d5", "#fdeee1", "#fff8f1"] },
+      "paper-raised": { "role": "neutral", "displayName": "Papier relevé", "canonical": "#fff8f1", "darkValue": "#1a3137", "tonalRamp": ["#5a4232", "#8a6a52", "#b8957a", "#d9b89c", "#ecd2bb", "#f8e7d5", "#fdeee1", "#fff8f1"] },
+      "ink": { "role": "primary", "displayName": "Encre pétrole", "canonical": "#1c343a", "darkValue": "#f8e7d5", "tonalRamp": ["#0b181c", "#15292f", "#1c343a", "#2f4a51", "#4b5f63", "#7d8f92", "#b9c4bf", "#e3e9e7"] },
+      "ink-deep": { "role": "primary", "displayName": "Pétrole profond", "canonical": "#15292f", "darkValue": "#fdeee1", "tonalRamp": ["#0b181c", "#15292f", "#1c343a", "#2f4a51", "#4b5f63", "#7d8f92", "#b9c4bf", "#e3e9e7"] },
+      "ink-soft": { "role": "neutral", "displayName": "Encre adoucie", "canonical": "#4b5f63", "darkValue": "#b9c4bf", "tonalRamp": ["#0b181c", "#15292f", "#1c343a", "#2f4a51", "#4b5f63", "#7d8f92", "#b9c4bf", "#e3e9e7"] },
+      "rule": { "role": "neutral", "displayName": "Filet", "canonical": "rgb(28 52 58 / 0.16)", "darkValue": "rgb(248 231 213 / 0.14)" },
+      "rule-strong": { "role": "neutral", "displayName": "Filet appuyé", "canonical": "rgb(28 52 58 / 0.42)", "darkValue": "rgb(248 231 213 / 0.4)" },
+      "lime": { "role": "primary", "displayName": "Citron vert", "canonical": "#dbfc87", "darkValue": "#dbfc87", "tonalRamp": ["#2c3a0e", "#4a6219", "#6b8d24", "#94bd3a", "#b9e05a", "#dbfc87", "#e8fdb0", "#f5fedc"] },
+      "band-head": { "role": "primary", "displayName": "Bandeau pétrole", "canonical": "#1c343a", "darkValue": "#0b181c", "tonalRamp": ["#0b181c", "#15292f", "#1c343a", "#2f4a51", "#4b5f63", "#7d8f92", "#b9c4bf", "#e3e9e7"] },
+      "band-head-ink": { "role": "neutral", "displayName": "Pêche sur bandeau", "canonical": "#f8e7d5", "darkValue": "#f8e7d5", "tonalRamp": ["#5a4232", "#8a6a52", "#b8957a", "#d9b89c", "#ecd2bb", "#f8e7d5", "#fdeee1", "#fff8f1"] },
+      "band-head-soft": { "role": "neutral", "displayName": "Gris sauge sur bandeau", "canonical": "#b9c4bf", "darkValue": "#9fb0ab", "tonalRamp": ["#0b181c", "#15292f", "#1c343a", "#2f4a51", "#4b5f63", "#7d8f92", "#b9c4bf", "#e3e9e7"] },
+      "corridor": { "role": "neutral", "displayName": "Couloir du profil", "canonical": "rgb(28 52 58 / 0.09)", "darkValue": "rgb(248 231 213 / 0.1)" },
+      "breach": { "role": "secondary", "displayName": "Terre cuite foncée", "canonical": "#a3471f", "darkValue": "#eea47a", "tonalRamp": ["#3d1a0c", "#6b2a14", "#a3471f", "#c0612f", "#d7804c", "#eea47a", "#f5c7aa", "#fbe6d9"] },
+      "breach-hatch": { "role": "secondary", "displayName": "Terre cuite de hachure", "canonical": "#d7804c", "darkValue": "#d7804c", "tonalRamp": ["#3d1a0c", "#6b2a14", "#a3471f", "#c0612f", "#d7804c", "#eea47a", "#f5c7aa", "#fbe6d9"] },
+      "breach-wash": { "role": "secondary", "displayName": "Voile terre cuite", "canonical": "rgb(215 128 76 / 0.14)", "darkValue": "rgb(215 128 76 / 0.16)" },
+      "danger": { "role": "tertiary", "displayName": "Brique", "canonical": "#a3361f", "darkValue": "#f2967f", "tonalRamp": ["#3a120a", "#6a2112", "#a3361f", "#c4553b", "#de7a62", "#f2967f", "#f8c3b6", "#fde8e3"] },
+      "danger-wash": { "role": "tertiary", "displayName": "Voile brique", "canonical": "rgb(163 54 31 / 0.08)", "darkValue": "rgb(242 150 127 / 0.1)" },
+      "series-equities": { "role": "tertiary", "displayName": "Série Actions (pétrole)", "canonical": "#1c343a", "darkValue": "#f8e7d5", "tonalRamp": ["#0b181c", "#15292f", "#1c343a", "#2f4a51", "#4b5f63", "#7d8f92", "#b9c4bf", "#e3e9e7"] },
+      "series-bonds": { "role": "tertiary", "displayName": "Série Obligations (lavande)", "canonical": "#8d80c4", "darkValue": "#aaa0de", "tonalRamp": ["#2a2445", "#463d74", "#6a5fa3", "#8d80c4", "#aaa0de", "#c6bfec", "#e0dcf6", "#f3f1fc"] },
+      "series-cash": { "role": "tertiary", "displayName": "Série Liquidités (menthe profonde)", "canonical": "#4f9483", "darkValue": "#7fc2ad", "tonalRamp": ["#132b25", "#22473e", "#356d5f", "#4f9483", "#7fc2ad", "#a6d6c7", "#cee5de", "#eef7f4"] },
+      "series-other": { "role": "tertiary", "displayName": "Série Autres (pierre)", "canonical": "#a9a492", "darkValue": "#8f8c80", "tonalRamp": ["#2e2d27", "#4c4a40", "#6e6b5e", "#8f8c80", "#a9a492", "#c4c1b2", "#d8d7cd", "#f0efea"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Nom du client et valeur totale, sur la même ligne de base ; 1.85rem sous 560px." },
+      "display-band": { "displayName": "Display du bandeau", "purpose": "Accroche de la page de connexion, sur le bandeau pétrole uniquement." },
+      "headline": { "displayName": "Headline", "purpose": "Titres de section (Répartition, Positions)." },
+      "title": { "displayName": "Title", "purpose": "Titre du formulaire de position, nom de l'application dans le bandeau." },
+      "body": { "displayName": "Body", "purpose": "Texte courant et toutes les cellules de données, chiffres tabulaires." },
+      "label": { "displayName": "Label", "purpose": "Libellés de champs." },
+      "label-quiet": { "displayName": "Label discret", "purpose": "En-têtes de colonnes et graduations de l'axe, en ink-soft, casse de phrase." }
+    },
+    "shadows": [
+      { "name": "corridor-edge", "value": "inset 1.5px 0 0 var(--corridor-edge), inset -1.5px 0 0 var(--corridor-edge)", "purpose": "Bornes minimum et maximum du couloir du profil (une seule si une seule borne existe)." },
+      { "name": "hatch-outline", "value": "inset 0 0 0 1px var(--breach-hatch)", "purpose": "Contour de la part hachurée et de sa pastille de légende." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Courbe unique de toutes les transitions et animations." },
+      { "name": "control-transition", "value": "160ms", "purpose": "Fond, bord et couleur des boutons et du sélecteur segmenté." },
+      { "name": "field-transition", "value": "140ms", "purpose": "Bord des champs au survol et au focus." },
+      { "name": "row-hover", "value": "120ms", "purpose": "Fond paper-deep au survol d'une ligne de tableau." },
+      { "name": "bar-in", "value": "720ms, stagger 70ms per row; overshoot +380ms", "purpose": "Déploiement des barres depuis la gauche, puis de la hachure ; désactivé sous prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "stack-chart", "value": "860px" },
+      { "name": "stack-tables", "value": "640px" },
+      { "name": "compact", "value": "560px" }
+    ],
+    "layout": {
+      "measure": "1180px",
+      "pageGutter": "1.5rem (1rem sous 560px)"
+    }
+  },
+  "components": [
+    {
+      "name": "Bouton principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Action principale d'une zone : pétrole plein, texte citron vert, pilule.",
+      "html": "<button class=\"ds-btn-primary\"><svg viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"M8 3v10M3 8h10\"/></svg>Ajouter une position</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; min-height: 2.5rem; padding: 0.5rem 1.15rem; border: 1px solid var(--primary-bg, #1c343a); border-radius: 999px; background: var(--primary-bg, #1c343a); color: var(--primary-ink, #dbfc87); font: 600 15px/1.2 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif; cursor: pointer; transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-primary:hover { background: var(--primary-bg-hover, #15292f); border-color: var(--primary-bg-hover, #15292f); } .ds-btn-primary:focus-visible { outline: 2px solid var(--focus, #1c343a); outline-offset: 2px; }"
+    },
+    {
+      "name": "Bouton secondaire",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Action d'accompagnement (export, annulation) : contour rule-strong, texte encre.",
+      "html": "<button class=\"ds-btn-secondary\"><svg viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10\"/></svg>Exporter en CSV</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 2.5rem; padding: 0.5rem 1.15rem; border: 1px solid var(--rule-strong, rgb(28 52 58 / 0.42)); border-radius: 999px; background: transparent; color: var(--ink, #1c343a); font: 600 15px/1.2 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif; cursor: pointer; transition: border-color 160ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-secondary:hover { border-color: var(--ink, #1c343a); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--focus, #1c343a); outline-offset: 2px; }"
+    },
+    {
+      "name": "Bandeau et bouton sur bandeau",
+      "kind": "nav",
+      "refersTo": "app-header",
+      "description": "En-tête pétrole pleine largeur : marque à gauche, conseiller et déconnexion à droite ; le citron vert n'apparaît qu'au survol et au focus.",
+      "html": "<header class=\"ds-band\"><span class=\"ds-brand\"><svg viewBox=\"0 0 22 22\" width=\"22\" height=\"22\" aria-hidden=\"true\"><rect x=\"0.75\" y=\"0.75\" width=\"20.5\" height=\"20.5\" rx=\"4\" fill=\"none\" stroke=\"currentColor\" stroke-opacity=\"0.35\" stroke-width=\"1.5\"/><rect x=\"8\" y=\"4\" width=\"7\" height=\"14\" fill=\"#dbfc87\" fill-opacity=\"0.22\"/><rect x=\"4\" y=\"5.5\" width=\"13\" height=\"2.5\" rx=\"0.5\" fill=\"currentColor\"/><rect x=\"4\" y=\"9.75\" width=\"8\" height=\"2.5\" rx=\"0.5\" fill=\"#dbfc87\"/><rect x=\"4\" y=\"14\" width=\"10\" height=\"2.5\" rx=\"0.5\" fill=\"currentColor\"/></svg>Mini-portefeuille</span><span class=\"ds-session\"><span>Alice Martin</span><button class=\"ds-btn-band\">Se déconnecter</button></span></header>",
+      "css": ".ds-band { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.85rem 1.5rem; background: var(--band-head, #1c343a); color: var(--band-head-ink, #f8e7d5); font-family: 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif; font-size: 15px; } .ds-brand { display: inline-flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 1.05rem; letter-spacing: -0.01em; } .ds-session { display: flex; align-items: center; gap: 1rem; } .ds-btn-band { min-height: 2.1rem; padding: 0.3rem 0.95rem; border: 1px solid rgb(248 231 213 / 0.35); border-radius: 999px; background: transparent; color: var(--band-head-ink, #f8e7d5); font-family: inherit; font-size: 15px; font-weight: 500; line-height: 1.2; cursor: pointer; transition: border-color 160ms cubic-bezier(0.16, 1, 0.3, 1), color 160ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-band:hover { border-color: #dbfc87; color: #dbfc87; } .ds-btn-band:focus-visible { outline: 2px solid #dbfc87; outline-offset: 2px; }"
+    },
+    {
+      "name": "Sélecteur segmenté",
+      "kind": "chip",
+      "refersTo": "segmented-option-selected",
+      "description": "Choix de devise ou de profil : pilule bordée, option choisie en pétrole plein et citron vert.",
+      "html": "<div class=\"ds-seg\"><span class=\"ds-seg-opt is-on\">CHF</span><span class=\"ds-seg-opt\" tabindex=\"0\">EUR</span><span class=\"ds-seg-opt\" tabindex=\"0\">USD</span></div>",
+      "css": ".ds-seg { display: inline-flex; padding: 3px; border: 1px solid var(--rule-strong, rgb(28 52 58 / 0.42)); border-radius: 999px; font-family: 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif; font-size: 15px; } .ds-seg-opt { display: inline-flex; align-items: center; min-height: 2rem; padding: 0.25rem 0.85rem; border-radius: 999px; font-weight: 500; color: var(--ink-soft, #4b5f63); cursor: pointer; transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1), color 160ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-seg-opt:hover { color: var(--ink, #1c343a); } .ds-seg-opt:focus-visible { outline: 2px solid var(--focus, #1c343a); outline-offset: 2px; } .ds-seg-opt.is-on { background: var(--primary-bg, #1c343a); color: var(--primary-ink, #dbfc87); font-weight: 600; }"
+    },
+    {
+      "name": "Champ de saisie",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Champ sur papier relevé, bord rule-strong, rayon 6px ; bord encre au focus, brique en erreur.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Quantité</span><input class=\"ds-input\" value=\"300\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 0.35rem; font-family: 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif; color: var(--ink, #1c343a); } .ds-field-label { font-size: 0.85rem; font-weight: 600; } .ds-input { font-family: inherit; font-size: 15px; font-weight: 400; line-height: 1.5; font-feature-settings: 'tnum' 1, 'lnum' 1; color: var(--ink, #1c343a); background: var(--paper-raised, #fff8f1); border: 1px solid var(--rule-strong, rgb(28 52 58 / 0.42)); border-radius: 6px; padding: 0.55rem 0.7rem; min-height: 2.6rem; transition: border-color 140ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-input:hover { border-color: var(--ink, #1c343a); } .ds-input:focus-visible { outline: 2px solid var(--focus, #1c343a); outline-offset: 1px; border-color: var(--ink, #1c343a); } .ds-input[aria-invalid='true'] { border-color: var(--danger, #a3361f); }"
+    },
+    {
+      "name": "Étiquette de profil",
+      "kind": "chip",
+      "refersTo": "profile-tag",
+      "description": "Nom du profil de risque en pilule bordée, sans fond.",
+      "html": "<span class=\"ds-tag\">Prudent</span>",
+      "css": ".ds-tag { display: inline-flex; align-items: center; padding: 0.05rem 0.6rem; border: 1px solid var(--rule-strong, rgb(28 52 58 / 0.42)); border-radius: 999px; font: 500 0.85rem/1.5 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif; color: var(--ink, #1c343a); }"
+    },
+    {
+      "name": "Ligne de répartition face au profil",
+      "kind": "custom",
+      "refersTo": "committee-row",
+      "description": "Signature : piste 0–100 % avec repères, couloir du profil borné, barre à l'échelle exacte, dépassement hachuré terre cuite, borne et écart en texte.",
+      "html": "<div class=\"ds-crow\"><span class=\"ds-cclass\"><span class=\"ds-key\"></span>Actions</span><div class=\"ds-track\"><span class=\"ds-corridor\" style=\"left:0%;width:30%\"></span><span class=\"ds-bar\" style=\"width:65.75%\"></span><span class=\"ds-over\" style=\"left:30%;width:35.75%\"></span></div><span class=\"ds-limit\">≤ 30 % · +35.75 pts</span><span class=\"ds-num\">CHF 48'330.00</span><span class=\"ds-num ds-strong\">65.75 %</span></div>",
+      "css": ".ds-crow { display: grid; grid-template-columns: 7.5rem minmax(14rem, 1fr) 9rem 8.5rem 4.5rem; align-items: center; gap: 0 1.25rem; min-height: 3.6rem; padding: 0.55rem 0; border-bottom: 1px solid var(--rule, rgb(28 52 58 / 0.16)); font: 400 15px/1.5 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif; font-feature-settings: 'tnum' 1, 'lnum' 1; color: var(--ink, #1c343a); } .ds-cclass { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; } .ds-key { width: 0.7rem; height: 0.7rem; border-radius: 2px; background: var(--series-equities, #1c343a); } .ds-track { position: relative; height: 1.75rem; background: linear-gradient(var(--rule, rgb(28 52 58 / 0.16)), var(--rule, rgb(28 52 58 / 0.16))) 25% 0 / 1px 100% no-repeat, linear-gradient(var(--rule, rgb(28 52 58 / 0.16)), var(--rule, rgb(28 52 58 / 0.16))) 50% 0 / 1px 100% no-repeat, linear-gradient(var(--rule, rgb(28 52 58 / 0.16)), var(--rule, rgb(28 52 58 / 0.16))) 75% 0 / 1px 100% no-repeat; } .ds-track::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--rule-strong, rgb(28 52 58 / 0.42)); } .ds-corridor { position: absolute; top: 0; bottom: 0; background: var(--corridor, rgb(28 52 58 / 0.09)); box-shadow: inset -1.5px 0 0 var(--corridor-edge, #1c343a); } .ds-bar, .ds-over { position: absolute; top: 50%; height: 0.75rem; margin-top: -0.375rem; } .ds-bar { left: 0; border-radius: 0 2px 2px 0; background: var(--series-equities, #1c343a); } .ds-over { background: repeating-linear-gradient(-45deg, var(--breach-hatch, #d7804c) 0 2px, transparent 2px 4.5px); background-color: var(--breach-wash, rgb(215 128 76 / 0.14)); box-shadow: inset 0 0 0 1px var(--breach-hatch, #d7804c); } .ds-limit { color: var(--breach, #a3471f); font-weight: 600; } .ds-num { text-align: right; } .ds-strong { font-weight: 600; }"
+    },
+    {
+      "name": "Note d'écart",
+      "kind": "card",
+      "refersTo": "breach-notes",
+      "description": "Message imprimé sur la fiche (pas de toast) : voile terre cuite sans bordure, titre terre cuite avec icône d'alerte.",
+      "html": "<div class=\"ds-notes\" role=\"alert\"><p class=\"ds-notes-title\"><svg viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"M8 2.2 14.3 13.3H1.7L8 2.2ZM8 6.4v3.2M8 11.4v.1\"/></svg>Répartition hors profil de risque</p><ul><li>Actions : 65.75 % du portefeuille, au-dessus du maximum de 30 % pour un profil prudent.</li></ul></div>",
+      "css": ".ds-notes { padding: 0.9rem 1.1rem; border-radius: 6px; background: var(--breach-wash, rgb(215 128 76 / 0.14)); color: var(--ink, #1c343a); font: 400 15px/1.5 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif; } .ds-notes-title { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-weight: 600; color: var(--breach, #a3471f); } .ds-notes ul { margin: 0.35rem 0 0; padding-left: 1.6rem; }"
+    },
+    {
+      "name": "Action de suppression",
+      "kind": "button",
+      "refersTo": "button-delete",
+      "description": "Action destructrice isolée : texte brique sans bord, contour et voile brique au survol ; confirmation dans la ligne.",
+      "html": "<button class=\"ds-btn-delete\">Supprimer</button> <button class=\"ds-btn-confirm\">Confirmer</button>",
+      "css": ".ds-btn-delete { display: inline-flex; align-items: center; min-height: 1.9rem; padding: 0.2rem 0.75rem; border: 1px solid transparent; border-radius: 999px; background: none; color: var(--danger, #a3361f); font: 500 0.9rem/1.2 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif; cursor: pointer; } .ds-btn-delete:hover, .ds-btn-delete:focus-visible { border-color: var(--danger, #a3361f); background: var(--danger-wash, rgb(163 54 31 / 0.08)); } .ds-btn-confirm { min-height: 1.9rem; padding: 0.2rem 0.85rem; border: 1px solid var(--danger, #a3361f); border-radius: 999px; background: var(--danger, #a3361f); color: var(--paper, #fdeee1); font: 600 0.9rem/1.2 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif; cursor: pointer; } .ds-btn-confirm:focus-visible { outline: 2px solid var(--focus, #1c343a); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "La page de comité",
+    "overview": "Chaque client se lit comme une page de comité de placement : la répartition réelle posée face aux bornes du profil de risque, à l'échelle exacte, sur un axe commun. Le monde est une encre pétrole sur papier pêche, repris des codes couleurs de Piguet Galland, sans logo ni nom de la banque. Un bandeau pétrole pleine largeur porte l'en-tête de l'application et la moitié gauche de la connexion ; tout le reste est du papier, réglé par des filets.\n\nLa densité est celle d'un document de travail : une seule grotesque, chiffres tabulaires et alignés, une taille de texte pour les données, des filets au lieu de cartes. La couleur est rare et toujours porteuse de sens : le citron vert pour l'action principale, une teinte fixe par classe d'actifs, la terre cuite hachurée pour un dépassement. Rien n'alarme : l'écart au profil est chiffré et hachuré, jamais rouge vif.\n\nLe mode sombre inverse le papier : la page devient pétrole profond (`#15292f`), l'encre devient pêche (`#f8e7d5`), et le citron vert passe en remplissage de l'action principale, de la sélection et du focus, puisque toute la page est alors du pétrole. Le système refuse le tableau de bord de gestion de fortune fait de cartes KPI et de donut.",
+    "keyCharacteristics": [
+      "Papier pêche, encre pétrole, bandeau pétrole pleine largeur.",
+      "Filets fins à la place des cartes ; aucune ombre portée.",
+      "Une grotesque (Hanken Grotesk Variable), chiffres tabulaires et alignés partout.",
+      "Barres à l'échelle exacte sur un axe 0–100 % commun, bande du profil teintée, dépassement hachuré.",
+      "Actions en pilule ; champs et messages à 6px ; marques de données à 2px."
+    ],
+    "rules": [
+      { "name": "The Lime-on-Petrol Rule", "body": "Le citron vert ne touche jamais le papier pêche. Il vit sur le pétrole : texte du bouton principal en clair, remplissage en sombre où toute la page est pétrole.", "section": "colors" },
+      { "name": "The Fixed Series Rule", "body": "Une teinte fixe par classe d'actifs (Actions pétrole, Obligations lavande, Liquidités menthe profonde, Autres pierre), jamais attribuée selon le rang ou la valeur.", "section": "colors" },
+      { "name": "The Hatched Breach Rule", "body": "Un dépassement se signale par une hachure terre cuite au-delà de la borne, plus la borne et l'écart en texte (`≤ 30 % · +35.75 pts`). La couleur n'est jamais la seule information, et l'écart n'est jamais rouge vif.", "section": "colors" },
+      { "name": "The One Data Size Rule", "body": "Toutes les données (montants, parts, quantités, cellules) sont à la taille du corps, 15px ; l'emphase passe par le poids 600, jamais par une taille plus grande dans le tableau.", "section": "typography" },
+      { "name": "The Tabular Figures Rule", "body": "Les chiffres tabulaires et alignés sont activés à la racine et ne sont jamais désactivés ; les nombres s'alignent à droite.", "section": "typography" },
+      { "name": "The Rules-Not-Cards Rule", "body": "Une section s'ouvre par un filet appuyé et ses lignes se séparent par des filets fins ; aucun contenu n'est posé sur une carte bordée ou ombrée. Seuls les messages (note d'écart, erreur) reçoivent un voile teinté sans bordure.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do poser la couleur sur le pétrole ou le papier selon The Lime-on-Petrol Rule : citron vert sur pétrole uniquement.",
+      "Do séparer les contenus par des filets (`rule` entre les lignes, `rule-strong` pour ouvrir une section) plutôt que par des cartes.",
+      "Do garder toutes les données à 15px en chiffres tabulaires, alignées à droite, l'emphase en poids 600.",
+      "Do accompagner tout état coloré d'un texte et d'une forme : hachure et écart chiffré pour un dépassement, couloir miniature pour « Dans le profil ».",
+      "Do utiliser la pilule pour les actions et les choix, 6px pour les champs et les messages, 2px pour les marques de données.",
+      "Do dessiner les icônes sur la grille de 16, trait 1.5 en `currentColor`.",
+      "Do redéfinir un jeton pour le mode sombre plutôt que d'écrire une valeur en dur."
+    ],
+    "donts": [
+      "Don't construire un tableau de bord en cartes KPI et donut ; la répartition se lit en barres à l'échelle exacte sur un axe commun.",
+      "Don't poser le citron vert sur le papier pêche, en texte comme en fond.",
+      "Don't ajouter d'ombre portée ni de carte bordée ; la profondeur reste tonale.",
+      "Don't attribuer les couleurs de série selon le rang, ni introduire une cinquième teinte de données.",
+      "Don't signaler un écart en rouge vif ou en vert « OK » ; l'écart est terre cuite hachurée, la conformité reste en `ink-soft`.",
+      "Don't ajouter le logo ou le nom Piguet Galland ; seuls les codes couleurs sont repris.",
+      "Don't introduire une seconde famille de caractères ni une police servie depuis un domaine externe.",
+      "Don't mettre de surtitre en majuscules au-dessus des titres ; les libellés restent en casse de phrase."
+    ]
+  }
+}

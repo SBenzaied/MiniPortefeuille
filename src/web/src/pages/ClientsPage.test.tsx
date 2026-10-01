@@ -9,9 +9,9 @@ import { ClientsPage } from './ClientsPage'
 vi.mock('../api/portfolio', () => ({ api: { listClients: vi.fn() } }))
 
 const clients: ClientSummary[] = [
-  { id: 1, name: 'Famille Dubois', riskProfile: 'Prudent', positionCount: 4, totalValueChf: 92488.5, alertCount: 0 },
-  { id: 2, name: 'Jean Rochat', riskProfile: 'Prudent', positionCount: 4, totalValueChf: 73510, alertCount: 1 },
-  { id: 4, name: 'Marc Weber', riskProfile: 'Dynamic', positionCount: 3, totalValueChf: 224600, alertCount: 2 },
+  { id: 1, name: 'Famille Dubois', riskProfile: 'Prudent', positionCount: 4, totalValueChf: 92488.5, alertCount: 0, alertAssetClasses: [] },
+  { id: 2, name: 'Jean Rochat', riskProfile: 'Prudent', positionCount: 4, totalValueChf: 73510, alertCount: 1, alertAssetClasses: ['Equities'] },
+  { id: 4, name: 'Marc Weber', riskProfile: 'Dynamic', positionCount: 3, totalValueChf: 224600, alertCount: 2, alertAssetClasses: ['Equities', 'Cash'] },
 ]
 
 describe('ClientsPage', () => {
@@ -28,6 +28,7 @@ describe('ClientsPage', () => {
     expect(await screen.findByRole('link', { name: 'Jean Rochat' })).toHaveAttribute('href', '/clients/2')
     expect(screen.getByText('1 alerte')).toBeInTheDocument()
     expect(screen.getByText('2 alertes')).toBeInTheDocument()
+    expect(screen.getByText('Actions, Liquidités')).toBeInTheDocument()
     expect(api.listClients).toHaveBeenCalledWith(undefined)
   })
 
@@ -36,7 +37,7 @@ describe('ClientsPage', () => {
     render(<ClientsPage />, { wrapper: MemoryRouter })
     await screen.findByText('Marc Weber')
 
-    await user.selectOptions(screen.getByLabelText('Profil de risque'), 'Dynamic')
+    await user.click(screen.getByRole('radio', { name: 'Dynamique' }))
 
     expect(api.listClients).toHaveBeenLastCalledWith('Dynamic')
     expect(await screen.findByText('Marc Weber')).toBeInTheDocument()

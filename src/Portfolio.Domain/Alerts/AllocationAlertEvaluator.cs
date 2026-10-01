@@ -17,20 +17,27 @@ public sealed record AllocationAlert(
     decimal LimitPercentage,
     string Message);
 
+/// <summary>Compare la répartition d'un portefeuille aux bornes de son profil de risque.</summary>
+public interface IAllocationAlertEvaluator
+{
+    IReadOnlyList<AllocationAlert> Evaluate(RiskProfile profile, PortfolioValuation valuation);
+}
+
 /// <summary>
-/// Compare la répartition d'un portefeuille aux bornes de son profil de risque.
+/// Évalue les alertes à partir des bornes fournies par <see cref="IAllocationPolicy"/>, injectée :
+/// changer de politique ne demande aucune modification ici.
 /// </summary>
 /// <remarks>
 /// La comparaison porte sur le pourcentage arrondi affiché au conseiller (2 décimales) :
 /// un portefeuille affiché à 30.00 % d'actions n'est pas en alerte pour une borne de 30 %.
 /// Un portefeuille vide ne déclenche aucune alerte.
 /// </remarks>
-public static class AllocationAlertEvaluator
+public sealed class AllocationAlertEvaluator(IAllocationPolicy policy) : IAllocationAlertEvaluator
 {
     // Point décimal, comme dans les montants affichés par le front (convention suisse).
     private static readonly CultureInfo NumberFormat = CultureInfo.InvariantCulture;
 
-    public static IReadOnlyList<AllocationAlert> Evaluate(RiskProfile profile, PortfolioValuation valuation)
+    public IReadOnlyList<AllocationAlert> Evaluate(RiskProfile profile, PortfolioValuation valuation)
     {
         ArgumentNullException.ThrowIfNull(valuation);
         if (valuation.TotalValue == 0m)
@@ -39,7 +46,7 @@ public static class AllocationAlertEvaluator
         }
 
         var alerts = new List<AllocationAlert>();
-        foreach (var limit in AllocationPolicy.For(profile))
+        foreach (var limit in policy.For(profile))
         {
             var actual = valuation.For(limit.AssetClass).Percentage;
 

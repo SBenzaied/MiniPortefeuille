@@ -4,9 +4,11 @@ import { ApiError } from '../api/http'
 import { api } from '../api/portfolio'
 import type { Position, PositionInput } from '../api/types'
 import { AlertBanner } from '../components/AlertBanner'
-import { AllocationChart } from '../components/AllocationChart'
+import { AllocationBands } from '../components/AllocationBands'
+import { Icon } from '../components/Icon'
 import { PositionForm } from '../components/PositionForm'
 import { PositionsTable, type PositionRow } from '../components/PositionsTable'
+import { Segmented } from '../components/Segmented'
 import { RISK_PROFILE_LABELS, formatMoney } from '../lib/format'
 import { useAsync } from '../lib/useAsync'
 
@@ -55,8 +57,8 @@ export function ClientPage() {
     }
   }
 
+  // La confirmation a lieu dans la ligne du tableau (PositionsTable).
   async function remove(position: Position) {
-    if (!window.confirm(`Supprimer la position « ${position.instrument} » ?`)) return
     setActionError(null)
     try {
       await api.deletePosition(clientId, position.id)
@@ -70,73 +72,104 @@ export function ClientPage() {
     return (
       <section>
         <p className="form-error" role="alert">
+          <Icon name="alert" />
           {client.error.status === 404 ? 'Client introuvable.' : client.error.message}
         </p>
-        <Link to="/clients">← Retour à la liste</Link>
+        <Link to="/clients" className="back-link">
+          <Icon name="arrowLeft" />
+          Retour à la liste
+        </Link>
       </section>
     )
   }
-  if (!client.data) return <p className="muted">Chargement…</p>
+  if (!client.data) return <p className="loading">Chargement…</p>
 
   const detail = client.data
   const val = valuation.data
+  const currencyOptions = (currencies.data ?? [{ code: 'CHF', name: 'Franc suisse', rateToChf: 1 }]).map((c) => ({
+    value: c.code,
+    label: c.code,
+  }))
+  const inBreach = (val?.alerts.length ?? 0) > 0
 
   return (
     <section>
       <Link to="/clients" className="back-link">
-        ← Mes clients
+        <Icon name="arrowLeft" />
+        Mes clients
       </Link>
-      <div className="page-header">
+
+      <header className="page-head">
         <div>
           <h1>{detail.name}</h1>
-          <p className="muted">
-            Profil <span className={`badge profile-${detail.riskProfile.toLowerCase()}`}>{RISK_PROFILE_LABELS[detail.riskProfile]}</span>
-            {' · '}Conseiller : {detail.advisorName}
+          <p className="page-head-meta">
+            <span>
+              Profil <span className="profile-tag">{RISK_PROFILE_LABELS[detail.riskProfile]}</span>
+            </span>
+            <span>Conseiller : {detail.advisorName}</span>
           </p>
         </div>
-        <div className="field inline">
-          <label htmlFor="reference-currency">Devise de référence</label>
-          <select id="reference-currency" value={currency} onChange={(e) => setCurrency(e.target.value)}>
-            {(currencies.data ?? [{ code: 'CHF', name: 'Franc suisse', rateToChf: 1 }]).map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.code}
-              </option>
-            ))}
-          </select>
+        <div className="sheet-total">
+          <span className="sheet-total-label">Valeur totale</span>
+          <strong className="sheet-total-value">{val ? formatMoney(val.totalValue, val.referenceCurrency) : '—'}</strong>
+          <Segmented legend="Devise de référence" options={currencyOptions} value={currency} onChange={setCurrency} />
         </div>
-      </div>
+      </header>
 
       {valuation.status === 'error' && (
         <div className="form-error" role="alert">
+          <Icon name="alert" />
           {valuation.error.message}
         </div>
       )}
 
       {val && (
-        <>
-          <AlertBanner alerts={val.alerts} />
-          <div className="summary-grid">
-            <div className="card total-card">
-              <h2 className="card-title">Valeur totale</h2>
-              <p className="total-value">{formatMoney(val.totalValue, val.referenceCurrency)}</p>
-              <p className="muted small">Taux de change fixes (données fictives)</p>
-            </div>
-            <div className="card">
-              <h2 className="card-title">Répartition par classe d'actifs</h2>
-              <AllocationChart allocations={val.allocations} currency={val.referenceCurrency} />
+        <section className="committee" aria-labelledby="committee-title">
+          <div className="section-head">
+            <div className="section-head-title">
+              <h2 id="committee-title">Répartition face au profil {RISK_PROFILE_LABELS[detail.riskProfile].toLowerCase()}</h2>
+              {val.totalValue > 0 &&
+                (inBreach ? (
+                  <span className="status status-breach">
+                    <span className="hatch-swatch" aria-hidden="true" />
+                    Hors profil
+                  </span>
+                ) : (
+                  <span className="status status-ok">
+                    <span className="ok-swatch" aria-hidden="true" />
+                    Dans le profil
+                  </span>
+                ))}
             </div>
           </div>
-        </>
+          <AllocationBands allocations={val.allocations} limits={val.limits} alerts={val.alerts} currency={val.referenceCurrency} />
+          <AlertBanner alerts={val.alerts} />
+          <div className="committee-foot small muted">
+            <div className="committee-legend" aria-hidden="true">
+              <span>
+                <span className="ok-swatch" />
+                Plage autorisée par le profil
+              </span>
+              <span>
+                <span className="hatch-swatch" />
+                Écart à la borne
+              </span>
+            </div>
+            <p>Taux de change fixes (données fictives)</p>
+          </div>
+        </section>
       )}
 
-      <div className="section-header">
+      <div className="section-head">
         <h2>Positions</h2>
         <div className="button-row">
-          <button type="button" className="secondary" onClick={exportCsv} disabled={detail.positions.length === 0}>
+          <button type="button" className="button secondary" onClick={exportCsv} disabled={detail.positions.length === 0}>
+            <Icon name="download" />
             Exporter en CSV
           </button>
           {!editing && (
-            <button type="button" onClick={() => setEditing({ mode: 'create' })}>
+            <button type="button" className="button" onClick={() => setEditing({ mode: 'create' })}>
+              <Icon name="plus" />
               Ajouter une position
             </button>
           )}
@@ -145,12 +178,13 @@ export function ClientPage() {
 
       {actionError && (
         <div className="form-error" role="alert">
+          <Icon name="alert" />
           {actionError}
         </div>
       )}
 
       {editing && (
-        <div className="card">
+        <div className="position-panel">
           <PositionForm
             key={editing.mode === 'edit' ? editing.position.id : 'new'}
             position={editing.mode === 'edit' ? editing.position : undefined}
@@ -164,6 +198,7 @@ export function ClientPage() {
       <PositionsTable
         rows={rows}
         referenceCurrency={val?.referenceCurrency ?? currency}
+        total={val?.totalValue}
         onEdit={(position) => setEditing({ mode: 'edit', position })}
         onDelete={remove}
       />

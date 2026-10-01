@@ -1,21 +1,24 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Portfolio.Api.Auth;
 using Portfolio.Api.Http;
 using Portfolio.Application.Clients;
 using Portfolio.Domain.Entities;
 
 namespace Portfolio.Api.Controllers;
 
+/// <summary>
+/// Le contrôleur ne connaît que des interfaces. Le conseiller connecté n'est pas lu ici : les
+/// services le reçoivent par injection (<c>ICurrentAdvisor</c>).
+/// </summary>
 [ApiController]
 [Authorize]
 [Route("api/clients")]
-public sealed class ClientsController(ClientService clients) : ControllerBase
+public sealed class ClientsController(IClientService clients, IPortfolioExporter exporter) : ControllerBase
 {
     /// <summary>Clients du conseiller connecté, filtrables par profil de risque.</summary>
     [HttpGet]
     public async Task<IReadOnlyList<ClientSummaryDto>> List([FromQuery] RiskProfile? riskProfile, CancellationToken ct) =>
-        await clients.ListAsync(User.GetAdvisorId(), riskProfile, ct);
+        await clients.ListAsync(riskProfile, ct);
 
     /// <summary>Détail d'un client et ses positions.</summary>
     [HttpGet("{clientId:int}")]
@@ -23,7 +26,7 @@ public sealed class ClientsController(ClientService clients) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ClientDetailDto>> Get(int clientId, CancellationToken ct)
     {
-        var client = await clients.GetAsync(User.GetAdvisorId(), clientId, ct);
+        var client = await clients.GetAsync(clientId, ct);
         return client is null
             ? Problem(statusCode: StatusCodes.Status404NotFound, title: "Ressource introuvable.")
             : client;
@@ -36,7 +39,7 @@ public sealed class ClientsController(ClientService clients) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetValuation(int clientId, [FromQuery] string? currency, CancellationToken ct)
     {
-        var result = await clients.GetValuationAsync(User.GetAdvisorId(), clientId, currency, ct);
+        var result = await clients.GetValuationAsync(clientId, currency, ct);
         return result.ToActionResult(this, Ok);
     }
 
@@ -46,19 +49,18 @@ public sealed class ClientsController(ClientService clients) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> ExportCsv(int clientId, [FromQuery] string? currency, CancellationToken ct)
     {
-        var advisorId = User.GetAdvisorId();
-        var client = await clients.GetAsync(advisorId, clientId, ct);
+        var client = await clients.GetAsync(clientId, ct);
         if (client is null)
         {
             return Problem(statusCode: StatusCodes.Status404NotFound, title: "Ressource introuvable.");
         }
 
-        var valuation = await clients.GetValuationAsync(advisorId, clientId, currency, ct);
+        var valuation = await clients.GetValuationAsync(clientId, currency, ct);
         return valuation.ToActionResult(this, v =>
         {
-            var csv = PortfolioCsvExporter.Export(client, v);
-            var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
-            return File(bytes, "text/csv; charset=utf-8", $"portefeuille-{clientId}-{v.ReferenceCurrency}.csv");
+            var content = exporter.Export(client, v);
+            var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(content)).ToArray();
+            return File(bytes, exporter.ContentType, $"portefeuille-{clientId}-{v.ReferenceCurrency}.{exporter.FileExtension}");
         });
     }
 }

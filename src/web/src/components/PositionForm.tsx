@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from 'react'
 import { ApiError } from '../api/http'
 import { ASSET_CLASSES, type Currency, type Position, type PositionInput } from '../api/types'
 import { ASSET_CLASS_LABELS } from '../lib/format'
+import { Icon } from './Icon'
 
 interface Props {
   /** Position à modifier ; absente pour une création. */
@@ -102,6 +103,7 @@ export function PositionForm({ position, currencies, onSubmit, onCancel }: Props
 
       {formError && (
         <div className="form-error" role="alert">
+          <Icon name="alert" />
           {formError}
         </div>
       )}
@@ -180,10 +182,10 @@ export function PositionForm({ position, currencies, onSubmit, onCancel }: Props
       </div>
 
       <div className="form-actions">
-        <button type="button" className="secondary" onClick={onCancel} disabled={submitting}>
+        <button type="button" className="button secondary" onClick={onCancel} disabled={submitting}>
           Annuler
         </button>
-        <button type="submit" disabled={submitting}>
+        <button type="submit" className="button" disabled={submitting}>
           {submitting ? 'Enregistrement…' : 'Enregistrer'}
         </button>
       </div>

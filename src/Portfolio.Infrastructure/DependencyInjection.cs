@@ -1,9 +1,7 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Application.Abstractions;
-using Portfolio.Domain.Entities;
 using Portfolio.Infrastructure.Persistence;
 
 namespace Portfolio.Infrastructure;
@@ -25,7 +23,7 @@ public static class DependencyInjection
             switch (provider.ToLowerInvariant())
             {
                 case "postgres":
-                    options.UseNpgsql(connectionString);
+                    options.UseNpgsql(PostgresConnectionString.Normalize(connectionString));
                     break;
                 case "sqlite":
                     options.UseSqlite(connectionString);
@@ -34,7 +32,10 @@ public static class DependencyInjection
                     throw new InvalidOperationException($"Fournisseur de base inconnu : {provider}.");
             }
         });
+        // Le port de l'application pointe sur la même instance scoped que le DbContext concret.
         services.AddScoped<IPortfolioDbContext>(sp => sp.GetRequiredService<PortfolioDbContext>());
+        services.AddScoped<IExchangeRateProvider, DbExchangeRateProvider>();
+        services.AddScoped<IDatabaseSeeder, DemoDataSeeder>();
         return services;
     }
 
@@ -58,8 +59,7 @@ public static class DependencyInjection
 
         if (configuration.GetValue("Database:SeedDemoData", defaultValue: false))
         {
-            var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<Advisor>>();
-            await DemoDataSeeder.SeedAsync(db, hasher, ct);
+            await scope.ServiceProvider.GetRequiredService<IDatabaseSeeder>().SeedAsync(ct);
         }
     }
 }

@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Position } from '../api/types'
 import { ASSET_CLASS_LABELS, formatMoney, formatNumber } from '../lib/format'
+import { Icon } from './Icon'
 
 export interface PositionRow extends Position {
   /** Valeur dans la devise de référence, fournie par l'endpoint de valorisation. */
@@ -13,6 +14,8 @@ type Direction = 'asc' | 'desc'
 interface Props {
   rows: PositionRow[]
   referenceCurrency: string
+  /** Valeur totale dans la devise de référence, affichée en pied de tableau. */
+  total?: number
   onEdit: (position: Position) => void
   onDelete: (position: Position) => void
 }
@@ -31,8 +34,24 @@ function compare(a: PositionRow, b: PositionRow, key: SortKey): number {
   }
 }
 
-export function PositionsTable({ rows, referenceCurrency, onEdit, onDelete }: Props) {
+export function PositionsTable({ rows, referenceCurrency, total, onEdit, onDelete }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; direction: Direction }>({ key: 'referenceValue', direction: 'desc' })
+  // Suppression confirmée dans la ligne : pas de boîte de dialogue du navigateur devant un client.
+  const [confirming, setConfirming] = useState<number | null>(null)
+  const deleteButtons = useRef(new Map<number, HTMLButtonElement>())
+  const returnFocusTo = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (confirming === null && returnFocusTo.current !== null) {
+      deleteButtons.current.get(returnFocusTo.current)?.focus()
+      returnFocusTo.current = null
+    }
+  }, [confirming])
+
+  function cancel(id: number) {
+    returnFocusTo.current = id
+    setConfirming(null)
+  }
 
   const sorted = useMemo(() => {
     const factor = sort.direction === 'asc' ? 1 : -1
@@ -58,21 +77,19 @@ export function PositionsTable({ rows, referenceCurrency, onEdit, onDelete }: Pr
       >
         <button type="button" className="sort-button" onClick={() => toggle(key)}>
           {label}
-          <span aria-hidden="true" className="sort-indicator">
-            {active ? (sort.direction === 'asc' ? '▲' : '▼') : '↕'}
-          </span>
+          <Icon className="sort-indicator" name={active ? (sort.direction === 'asc' ? 'sortAsc' : 'sortDesc') : 'sortNone'} />
         </button>
       </th>
     )
   }
 
   if (rows.length === 0) {
-    return <p className="muted">Ce client n'a encore aucune position.</p>
+    return <p className="empty">Ce client n'a encore aucune position. Ajoutez-en une pour calculer sa répartition.</p>
   }
 
   return (
     <div className="table-scroll">
-      <table className="data-table">
+      <table className="data-table positions-table">
         <thead>
           <tr>
             {header('instrument', 'Instrument')}
@@ -89,25 +106,66 @@ export function PositionsTable({ rows, referenceCurrency, onEdit, onDelete }: Pr
         </thead>
         <tbody>
           {sorted.map((p) => (
-            <tr key={p.id}>
-              <td>{p.instrument}</td>
-              <td>{ASSET_CLASS_LABELS[p.assetClass]}</td>
-              <td className="num">{formatNumber(p.quantity)}</td>
-              <td className="num">{formatNumber(p.unitPrice, 2)}</td>
-              <td>{p.currency}</td>
-              <td className="num">{formatMoney(p.marketValue, p.currency)}</td>
-              <td className="num">{formatMoney(p.referenceValue, referenceCurrency)}</td>
-              <td className="row-actions">
-                <button type="button" className="link-button" onClick={() => onEdit(p)} aria-label={`Modifier ${p.instrument}`}>
-                  Modifier
-                </button>
-                <button type="button" className="link-button danger" onClick={() => onDelete(p)} aria-label={`Supprimer ${p.instrument}`}>
-                  Supprimer
-                </button>
+            <tr key={p.id} className={confirming === p.id ? 'is-confirming' : undefined}>
+              <td className="cell-strong p-inst">{p.instrument}</td>
+              <td className="p-class">{ASSET_CLASS_LABELS[p.assetClass]}</td>
+              <td className="num p-qty">{formatNumber(p.quantity)}</td>
+              <td className="num p-price">{formatNumber(p.unitPrice, 2)}</td>
+              <td className="p-cur">{p.currency}</td>
+              <td className="num p-mv">{formatMoney(p.marketValue, p.currency)}</td>
+              <td className="num p-ref">{formatMoney(p.referenceValue, referenceCurrency)}</td>
+              <td className="row-actions p-actions">
+                {confirming === p.id ? (
+                  <span className="row-actions-inner confirm" role="group" aria-label={`Supprimer ${p.instrument} ?`}>
+                    <span className="confirm-question">Supprimer ?</span>
+                    <button
+                      type="button"
+                      className="confirm-button"
+                      autoFocus
+                      onClick={() => {
+                        setConfirming(null)
+                        onDelete(p)
+                      }}
+                      aria-label={`Confirmer la suppression de ${p.instrument}`}
+                    >
+                      Confirmer
+                    </button>
+                    <button type="button" className="text-button" onClick={() => cancel(p.id)}>
+                      Annuler
+                    </button>
+                  </span>
+                ) : (
+                  <span className="row-actions-inner">
+                    <button type="button" className="text-button" onClick={() => onEdit(p)} aria-label={`Modifier ${p.instrument}`}>
+                      Modifier
+                    </button>
+                    <button
+                      type="button"
+                      className="delete-button"
+                      ref={(el) => {
+                        if (el) deleteButtons.current.set(p.id, el)
+                        else deleteButtons.current.delete(p.id)
+                      }}
+                      onClick={() => setConfirming(p.id)}
+                      aria-label={`Supprimer ${p.instrument}`}
+                    >
+                      Supprimer
+                    </button>
+                  </span>
+                )}
               </td>
             </tr>
           ))}
         </tbody>
+        {total !== undefined && (
+          <tfoot>
+            <tr className="table-total">
+              <td colSpan={6}>Total</td>
+              <td className="num">{formatMoney(total, referenceCurrency)}</td>
+              <td className="p-actions" />
+            </tr>
+          </tfoot>
+        )}
       </table>
     </div>
   )

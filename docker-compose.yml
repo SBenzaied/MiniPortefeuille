@@ -32,6 +32,8 @@ services:
       Database__Provider: Postgres
       Database__SeedDemoData: "true"
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-}
+      # L'API n'est joignable que par nginx : elle lit l'adresse client dans X-Forwarded-For.
+      ReverseProxy__TrustForwardedHeaders: "true"
     depends_on:
       db:
         condition: service_healthy

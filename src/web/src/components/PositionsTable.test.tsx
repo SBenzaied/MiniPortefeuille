@@ -56,9 +56,24 @@ describe('PositionsTable', () => {
 
     await user.click(screen.getByRole('button', { name: 'Modifier Apple Inc.' }))
     await user.click(screen.getByRole('button', { name: 'Supprimer Nestlé SA' }))
+    expect(onDelete).not.toHaveBeenCalled() // la suppression attend une confirmation
+    await user.click(screen.getByRole('button', { name: 'Confirmer la suppression de Nestlé SA' }))
 
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: 2 }))
     expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }))
+  })
+
+  it('annule la suppression et rend le focus au bouton Supprimer', async () => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn()
+    render(<PositionsTable rows={rows} referenceCurrency="CHF" onEdit={vi.fn()} onDelete={onDelete} />)
+
+    await user.click(screen.getByRole('button', { name: 'Supprimer Apple Inc.' }))
+    expect(screen.getByRole('button', { name: 'Confirmer la suppression de Apple Inc.' })).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Annuler' }))
+
+    expect(onDelete).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Supprimer Apple Inc.' })).toHaveFocus()
   })
 
   it('affiche un message quand il n’y a aucune position', () => {

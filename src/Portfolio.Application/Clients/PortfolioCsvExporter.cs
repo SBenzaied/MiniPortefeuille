@@ -4,15 +4,31 @@ using Portfolio.Domain.Valuation;
 
 namespace Portfolio.Application.Clients;
 
+/// <summary>Export d'un portefeuille dans un format tabulaire.</summary>
+public interface IPortfolioExporter
+{
+    /// <summary>Type MIME du contenu produit.</summary>
+    string ContentType { get; }
+
+    /// <summary>Extension de fichier, sans point.</summary>
+    string FileExtension { get; }
+
+    string Export(ClientDetailDto client, ValuationDto valuation);
+}
+
 /// <summary>
 /// Export CSV d'un portefeuille, pensé pour Excel en Suisse romande : séparateur « ; »,
 /// point décimal, UTF-8 avec BOM (géré par l'appelant via l'encodage).
 /// </summary>
-public static class PortfolioCsvExporter
+public sealed class PortfolioCsvExporter : IPortfolioExporter
 {
     private const char Separator = ';';
 
-    public static string Export(ClientDetailDto client, ValuationDto valuation)
+    public string ContentType => "text/csv; charset=utf-8";
+
+    public string FileExtension => "csv";
+
+    public string Export(ClientDetailDto client, ValuationDto valuation)
     {
         var values = valuation.Positions.ToDictionary(p => p.PositionId, p => p.ValueInReferenceCurrency);
         var csv = new StringBuilder();

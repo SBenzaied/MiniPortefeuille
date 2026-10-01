@@ -25,6 +25,8 @@ export interface ClientSummary {
   positionCount: number
   totalValueChf: number
   alertCount: number
+  /** Classes d'actifs hors profil. */
+  alertAssetClasses: AssetClass[]
 }
 
 export interface Position {
@@ -59,12 +61,20 @@ export interface AllocationAlert {
   message: string
 }
 
+/** Borne du profil de risque pour une classe d'actifs, en pourcent (bornes incluses). */
+export interface AllocationLimit {
+  assetClass: AssetClass
+  minPercentage: number | null
+  maxPercentage: number | null
+}
+
 export interface Valuation {
   referenceCurrency: string
   totalValue: number
   allocations: Allocation[]
   positions: { positionId: number; valueInReferenceCurrency: number }[]
   alerts: AllocationAlert[]
+  limits: AllocationLimit[]
 }
 
 export interface Currency {

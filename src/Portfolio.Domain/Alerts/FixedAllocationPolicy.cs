@@ -2,15 +2,13 @@ using Portfolio.Domain.Entities;
 
 namespace Portfolio.Domain.Alerts;
 
-/// <summary>Borne de répartition pour une classe d'actifs, en pourcent du portefeuille (bornes incluses).</summary>
-public sealed record AllocationLimit(AssetClass AssetClass, decimal? MinPercentage, decimal? MaxPercentage);
-
 /// <summary>
-/// Bornes de répartition attendues par profil de risque. Les valeurs sont volontairement
+/// Bornes de répartition par profil de risque, codées en dur. Les valeurs sont volontairement
 /// simples et fictives : dans un vrai contexte, elles viendraient de la politique
-/// d'investissement de la banque et seraient paramétrables.
+/// d'investissement de la banque et seraient paramétrables (autre implémentation de
+/// <see cref="IAllocationPolicy"/>).
 /// </summary>
-public static class AllocationPolicy
+public sealed class FixedAllocationPolicy : IAllocationPolicy
 {
     private static readonly Dictionary<RiskProfile, AllocationLimit[]> Limits = new()
     {
@@ -31,5 +29,5 @@ public static class AllocationPolicy
         ],
     };
 
-    public static IReadOnlyList<AllocationLimit> For(RiskProfile profile) => Limits[profile];
+    public IReadOnlyList<AllocationLimit> For(RiskProfile profile) => Limits[profile];
 }

@@ -8,7 +8,14 @@ namespace Portfolio.Api.Auth;
 
 public sealed record IssuedToken(string AccessToken, DateTimeOffset ExpiresAt);
 
-public sealed class JwtTokenIssuer(IOptions<JwtOptions> options, TimeProvider clock)
+/// <summary>Émission du jeton d'accès d'un conseiller authentifié.</summary>
+public interface ITokenIssuer
+{
+    IssuedToken Issue(AuthenticatedAdvisor advisor);
+}
+
+/// <summary>Jeton JWT HS256 signé avec la clé de configuration ; l'horloge est injectée.</summary>
+public sealed class JwtTokenIssuer(IOptions<JwtOptions> options, TimeProvider clock) : ITokenIssuer
 {
     public IssuedToken Issue(AuthenticatedAdvisor advisor)
     {

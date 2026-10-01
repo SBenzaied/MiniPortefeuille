@@ -5,7 +5,15 @@ namespace Portfolio.Application.Positions;
 /// <summary>Données d'une position une fois validées et normalisées.</summary>
 public sealed record ValidPosition(string Instrument, AssetClass AssetClass, decimal Quantity, decimal UnitPrice, string Currency);
 
-public static class PositionValidator
+/// <summary>Validation et normalisation d'une demande de création ou de modification de position.</summary>
+public interface IPositionValidator
+{
+    /// <returns>La position validée, ou <c>null</c> et les messages d'erreur par champ.</returns>
+    (ValidPosition? Value, IReadOnlyDictionary<string, string[]> Errors) Validate(
+        PositionRequest? request, IReadOnlyCollection<string> knownCurrencies);
+}
+
+public sealed class PositionValidator : IPositionValidator
 {
     public const int InstrumentMaxLength = 100;
     public const int MaxDecimals = 6;
@@ -13,7 +21,7 @@ public static class PositionValidator
     /// <summary>Plafond de cohérence, aligné sur la précision numeric(18,6) en base.</summary>
     public const decimal MaxAmount = 999_999_999_999m;
 
-    public static (ValidPosition? Value, IReadOnlyDictionary<string, string[]> Errors) Validate(
+    public (ValidPosition? Value, IReadOnlyDictionary<string, string[]> Errors) Validate(
         PositionRequest? request, IReadOnlyCollection<string> knownCurrencies)
     {
         var errors = new Dictionary<string, List<string>>();

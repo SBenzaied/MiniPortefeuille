@@ -15,7 +15,7 @@ public sealed record LoginResponse(string AccessToken, DateTimeOffset ExpiresAt,
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(AuthService auth, JwtTokenIssuer tokens) : ControllerBase
+public sealed class AuthController(IAuthService auth, ITokenIssuer tokens) : ControllerBase
 {
     /// <summary>Échange identifiant et mot de passe contre un jeton JWT.</summary>
     [HttpPost("login")]

@@ -5,145 +5,171 @@ using Portfolio.Domain.Entities;
 
 namespace Portfolio.IntegrationTests;
 
-public class ClientsApiTests(PortfolioApiFactory factory) : IClassFixture<PortfolioApiFactory>
+/// <summary>Lecture seule : une seule API (donc une seule base) pour toute la fixture.</summary>
+[TestFixture]
+public class ClientsApiTests
 {
     private static readonly System.Text.Json.JsonSerializerOptions Json = PortfolioApiFactory.Json;
 
-    private async Task<List<ClientSummary>> ListAsync(HttpClient client, string query = "") =>
+    private PortfolioApiFactory _factory = null!;
+
+    [OneTimeSetUp]
+    public void StartApi() => _factory = new PortfolioApiFactory();
+
+    [OneTimeTearDown]
+    public void StopApi() => _factory.Dispose();
+
+    private static async Task<List<ClientSummary>> ListAsync(HttpClient client, string query = "") =>
         (await client.GetFromJsonAsync<List<ClientSummary>>($"/api/clients{query}", Json))!;
 
-    [Fact]
+    [Test]
     public async Task An_advisor_only_sees_their_own_clients()
     {
-        var alice = await factory.CreateAuthenticatedClientAsync("amartin");
-        var bruno = await factory.CreateAuthenticatedClientAsync("bnguyen");
+        var alice = await _factory.CreateAuthenticatedClientAsync("amartin");
+        var bruno = await _factory.CreateAuthenticatedClientAsync("bnguyen");
 
         var aliceClients = (await ListAsync(alice)).Select(c => c.Name);
         var brunoClients = (await ListAsync(bruno)).Select(c => c.Name);
 
-        Assert.Equal(["Famille Dubois", "Jean Rochat", "Marc Weber", "Sophie Keller"], aliceClients);
-        Assert.Equal(["Claire Favre", "Fondation Lémanique", "Paul Meier"], brunoClients);
+        Assert.That(aliceClients, Is.EqualTo(new[] { "Famille Dubois", "Jean Rochat", "Marc Weber", "Sophie Keller" }));
+        Assert.That(brunoClients, Is.EqualTo(new[] { "Claire Favre", "Fondation Lémanique", "Paul Meier" }));
     }
 
-    [Fact]
+    [Test]
     public async Task Clients_can_be_filtered_by_risk_profile()
     {
-        var alice = await factory.CreateAuthenticatedClientAsync("amartin");
+        var alice = await _factory.CreateAuthenticatedClientAsync("amartin");
 
         var prudent = await ListAsync(alice, "?riskProfile=Prudent");
 
-        Assert.Equal(["Famille Dubois", "Jean Rochat"], prudent.Select(c => c.Name));
-        Assert.All(prudent, c => Assert.Equal(RiskProfile.Prudent, c.RiskProfile));
+        Assert.That(prudent.Select(c => c.Name), Is.EqualTo(new[] { "Famille Dubois", "Jean Rochat" }));
+        Assert.That(prudent.Select(c => c.RiskProfile), Is.All.EqualTo(RiskProfile.Prudent));
     }
 
-    [Fact]
+    [Test]
     public async Task Unknown_risk_profile_filter_is_a_bad_request()
     {
-        var alice = await factory.CreateAuthenticatedClientAsync("amartin");
+        var alice = await _factory.CreateAuthenticatedClientAsync("amartin");
 
         var response = await alice.GetAsync("/api/clients?riskProfile=Agressif");
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
 
-    [Fact]
+    [Test]
     public async Task Client_detail_lists_positions()
     {
-        var alice = await factory.CreateAuthenticatedClientAsync("amartin");
+        var alice = await _factory.CreateAuthenticatedClientAsync("amartin");
         var rochat = (await ListAsync(alice)).Single(c => c.Name == "Jean Rochat");
 
         var detail = await alice.GetFromJsonAsync<ClientDetail>($"/api/clients/{rochat.Id}", Json);
 
-        Assert.Equal("Alice Martin", detail!.AdvisorName);
-        Assert.Equal(4, detail.Positions.Count);
+        Assert.That(detail!.AdvisorName, Is.EqualTo("Alice Martin"));
+        Assert.That(detail.Positions, Has.Count.EqualTo(4));
         var apple = detail.Positions.Single(p => p.Instrument == "Apple Inc.");
-        Assert.Equal((120m, 215m, "USD", 25_800m), (apple.Quantity, apple.UnitPrice, apple.Currency, apple.MarketValue));
+        Assert.That((apple.Quantity, apple.UnitPrice, apple.Currency, apple.MarketValue), Is.EqualTo((120m, 215m, "USD", 25_800m)));
     }
 
-    [Fact]
+    [Test]
+    public async Task List_names_the_asset_classes_out_of_profile()
+    {
+        var alice = await _factory.CreateAuthenticatedClientAsync("amartin");
+        var clients = await ListAsync(alice);
+
+        Assert.That(clients.Single(c => c.Name == "Jean Rochat").AlertAssetClasses, Is.EqualTo(new[] { AssetClass.Equities }));
+        Assert.That(clients.Single(c => c.Name == "Famille Dubois").AlertAssetClasses, Is.Empty);
+    }
+
+    [Test]
     public async Task Valuation_computes_total_allocation_and_alerts_in_chf()
     {
-        var alice = await factory.CreateAuthenticatedClientAsync("amartin");
+        var alice = await _factory.CreateAuthenticatedClientAsync("amartin");
         var rochat = (await ListAsync(alice)).Single(c => c.Name == "Jean Rochat");
 
         var valuation = await alice.GetFromJsonAsync<Valuation>($"/api/clients/{rochat.Id}/valuation", Json);
 
         // Novartis 300 × 92.30 = 27 690 CHF ; Apple 120 × 215 USD × 0.80 = 20 640 CHF ;
         // Confédération 150 × 101.20 = 15 180 CHF ; compte courant 10 000 CHF.
-        Assert.Equal("CHF", valuation!.ReferenceCurrency);
-        Assert.Equal(73_510m, valuation.TotalValue);
+        Assert.That(valuation!.ReferenceCurrency, Is.EqualTo("CHF"));
+        Assert.That(valuation.TotalValue, Is.EqualTo(73_510m));
         var equities = valuation.Allocations.Single(a => a.AssetClass == AssetClass.Equities);
-        Assert.Equal(48_330m, equities.Amount);
-        Assert.Equal(65.75m, equities.Percentage); // 48 330 / 73 510 = 65.746…
+        Assert.That(equities.Amount, Is.EqualTo(48_330m));
+        Assert.That(equities.Percentage, Is.EqualTo(65.75m)); // 48 330 / 73 510 = 65.746…
 
-        var alert = Assert.Single(valuation.Alerts);
-        Assert.Equal((AssetClass.Equities, AlertKind.AboveMaximum, 30m), (alert.AssetClass, alert.Kind, alert.LimitPercentage));
+        Assert.That(valuation.Alerts, Has.Count.EqualTo(1));
+        var alert = valuation.Alerts[0];
+        Assert.That((alert.AssetClass, alert.Kind, alert.LimitPercentage), Is.EqualTo((AssetClass.Equities, AlertKind.AboveMaximum, 30m)));
+
+        // Les bornes du profil prudent sont exposées pour tracer la bande autorisée.
+        var equityLimit = valuation.Limits.Single(l => l.AssetClass == AssetClass.Equities);
+        Assert.That(equityLimit.MinPercentage, Is.Null);
+        Assert.That(equityLimit.MaxPercentage, Is.EqualTo(30m));
     }
 
-    [Fact]
+    [Test]
     public async Task Valuation_can_use_another_reference_currency()
     {
-        var alice = await factory.CreateAuthenticatedClientAsync("amartin");
+        var alice = await _factory.CreateAuthenticatedClientAsync("amartin");
         var rochat = (await ListAsync(alice)).Single(c => c.Name == "Jean Rochat");
 
         var valuation = await alice.GetFromJsonAsync<Valuation>($"/api/clients/{rochat.Id}/valuation?currency=usd", Json);
 
-        Assert.Equal("USD", valuation!.ReferenceCurrency);
-        Assert.Equal(91_887.50m, valuation.TotalValue); // 73 510 / 0.80
+        Assert.That(valuation!.ReferenceCurrency, Is.EqualTo("USD"));
+        Assert.That(valuation.TotalValue, Is.EqualTo(91_887.50m)); // 73 510 / 0.80
     }
 
-    [Fact]
+    [Test]
     public async Task Unknown_reference_currency_returns_a_validation_error()
     {
-        var alice = await factory.CreateAuthenticatedClientAsync("amartin");
+        var alice = await _factory.CreateAuthenticatedClientAsync("amartin");
         var rochat = (await ListAsync(alice)).Single(c => c.Name == "Jean Rochat");
 
         var response = await alice.GetAsync($"/api/clients/{rochat.Id}/valuation?currency=JPY");
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         var problem = await response.Content.ReadFromJsonAsync<ValidationProblem>();
-        Assert.Contains("currency", problem!.Errors.Keys);
+        Assert.That(problem!.Errors, Does.ContainKey("currency"));
     }
 
-    [Fact]
+    [Test]
     public async Task Another_advisors_client_is_reported_as_not_found()
     {
-        var alice = await factory.CreateAuthenticatedClientAsync("amartin");
-        var bruno = await factory.CreateAuthenticatedClientAsync("bnguyen");
+        var alice = await _factory.CreateAuthenticatedClientAsync("amartin");
+        var bruno = await _factory.CreateAuthenticatedClientAsync("bnguyen");
         var brunosClientId = (await ListAsync(bruno)).First().Id;
 
         // 404 et non 403 : on ne confirme pas l'existence d'un client hors périmètre.
-        Assert.Equal(HttpStatusCode.NotFound, (await alice.GetAsync($"/api/clients/{brunosClientId}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await alice.GetAsync($"/api/clients/{brunosClientId}/valuation")).StatusCode);
+        Assert.That((await alice.GetAsync($"/api/clients/{brunosClientId}")).StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        Assert.That((await alice.GetAsync($"/api/clients/{brunosClientId}/valuation")).StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
 
-    [Fact]
+    [Test]
     public async Task Portfolio_can_be_exported_as_csv_by_its_advisor_only()
     {
-        var alice = await factory.CreateAuthenticatedClientAsync("amartin");
-        var bruno = await factory.CreateAuthenticatedClientAsync("bnguyen");
+        var alice = await _factory.CreateAuthenticatedClientAsync("amartin");
+        var bruno = await _factory.CreateAuthenticatedClientAsync("bnguyen");
         var rochat = (await ListAsync(alice)).Single(c => c.Name == "Jean Rochat");
 
         var response = await alice.GetAsync($"/api/clients/{rochat.Id}/export.csv?currency=CHF");
         var forbidden = await bruno.GetAsync($"/api/clients/{rochat.Id}/export.csv");
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("text/csv", response.Content.Headers.ContentType!.MediaType);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(response.Content.Headers.ContentType!.MediaType, Is.EqualTo("text/csv"));
         var csv = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Apple Inc.;Equities;120;215;USD;25800;20640", csv);
-        Assert.Contains("Total;;;;;;73510", csv);
-        Assert.Equal(HttpStatusCode.NotFound, forbidden.StatusCode);
+        Assert.That(csv, Does.Contain("Apple Inc.;Equities;120;215;USD;25800;20640"));
+        Assert.That(csv, Does.Contain("Total;;;;;;73510"));
+        Assert.That(forbidden.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
 
-    [Fact]
+    [Test]
     public async Task Empty_portfolio_is_valued_at_zero_without_alert()
     {
-        var bruno = await factory.CreateAuthenticatedClientAsync("bnguyen");
+        var bruno = await _factory.CreateAuthenticatedClientAsync("bnguyen");
         var meier = (await ListAsync(bruno)).Single(c => c.Name == "Paul Meier");
 
         var valuation = await bruno.GetFromJsonAsync<Valuation>($"/api/clients/{meier.Id}/valuation", Json);
 
-        Assert.Equal(0m, valuation!.TotalValue);
-        Assert.Empty(valuation.Alerts);
+        Assert.That(valuation!.TotalValue, Is.Zero);
+        Assert.That(valuation.Alerts, Is.Empty);
     }
 }

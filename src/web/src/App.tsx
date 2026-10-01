@@ -6,7 +6,7 @@ import { Layout } from './components/Layout'
 import { ClientsPage } from './pages/ClientsPage'
 import { LoginPage } from './pages/LoginPage'
 
-// La fiche client embarque la librairie de graphiques : chargée à la demande.
+// La fiche client (formulaire, tableau, répartition) n'est chargée qu'à l'ouverture d'un client.
 const ClientPage = lazy(() => import('./pages/ClientPage').then((m) => ({ default: m.ClientPage })))
 
 export default function App() {

@@ -4,19 +4,19 @@ namespace Portfolio.Domain.Valuation;
 
 /// <summary>
 /// Calcule la valeur totale d'un portefeuille et sa répartition par classe d'actifs.
-/// Fonction pure : aucune dépendance à la base ni à l'horloge, donc testable isolément.
+/// Sans état ni dépendance (base, horloge) : enregistré en singleton, testable isolément.
 /// </summary>
 /// <remarks>
 /// Les calculs se font en pleine précision <see cref="decimal"/> ; l'arrondi (2 décimales,
 /// au plus proche, 0.5 vers l'extérieur) n'intervient qu'au moment de produire le résultat.
 /// Conséquence assumée : la somme des pourcentages arrondis peut différer de 100 de ±0.01 par ligne.
 /// </remarks>
-public static class PortfolioValuator
+public sealed class PortfolioValuator : IPortfolioValuator
 {
     public const int AmountDecimals = 2;
     public const int PercentageDecimals = 2;
 
-    public static PortfolioValuation Value(
+    public PortfolioValuation Value(
         IEnumerable<Position> positions,
         ExchangeRates rates,
         string referenceCurrency = Currency.Chf)

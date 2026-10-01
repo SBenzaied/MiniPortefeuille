@@ -32,7 +32,14 @@ await page.getByLabel('Quantité').fill('-5')
 await page.getByLabel('Devise', { exact: true }).selectOption('USD')
 await page.getByRole('button', { name: 'Enregistrer' }).click()
 await page.getByText('La quantité doit être strictement positive.').waitFor()
-await page.locator('.position-form').screenshot({ path: fileURLToPath(new URL('04-erreurs-validation.png', outDir)) })
+// Le formulaire n'a pas de cadre : on capture sa zone avec une marge autour.
+const box = await page.locator('.position-form').boundingBox()
+const margin = 24
+await page.screenshot({
+  path: fileURLToPath(new URL('04-erreurs-validation.png', outDir)),
+  fullPage: true,
+  clip: { x: box.x - margin, y: box.y - margin, width: box.width + 2 * margin, height: box.height + 2 * margin },
+})
 
 await browser.close()
 console.log(`Captures écrites dans ${fileURLToPath(outDir)}`)

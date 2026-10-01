@@ -41,9 +41,11 @@ public sealed class PortfolioApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("RateLimiting:LoginPermitPerMinute", "1000");
     }
 
-    public async Task<HttpClient> CreateAuthenticatedClientAsync(string userName)
+    public Task<HttpClient> CreateAuthenticatedClientAsync(string userName) => AuthenticateAsync(CreateClient(), userName);
+
+    /// <summary>Connecte un client HTTP (y compris d'une fabrique dérivée par WithWebHostBuilder).</summary>
+    public static async Task<HttpClient> AuthenticateAsync(HttpClient client, string userName)
     {
-        var client = CreateClient();
         var response = await client.PostAsJsonAsync("/api/auth/login", new { userName, password = DemoDataSeeder.DemoPassword });
         response.EnsureSuccessStatusCode();
         var login = await response.Content.ReadFromJsonAsync<JsonElement>();

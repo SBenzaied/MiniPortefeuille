@@ -1,0 +1,88 @@
+# Blueprint Render : https://render.com/docs/blueprint-spec
+#
+# Déploie Mini-portefeuille en trois ressources :
+#   - une base PostgreSQL gérée, joignable uniquement depuis le réseau privé de Render ;
+#   - un service web Docker (Dockerfile à la racine) : l'API sert aussi le front React,
+#     d'où une seule URL publique, sans CORS ni proxy entre services ;
+#   - le serveur MCP (src/Portfolio.Mcp), pour connecter Claude en lecture seule.
+#
+# Mise en place : Render > New > Blueprint > choisir ce dépôt. Pour l'application, aucun
+# secret à saisir : la clé JWT est générée par Render et la chaîne de connexion vient de la
+# base. Le serveur MCP demande trois valeurs (sync: false), décrites plus bas.
+#
+# Offre gratuite : le service se met en veille après une période d'inactivité (premier accès
+# plus lent) et la base gratuite a une durée de vie limitée ; voir les conditions de Render.
+
+databases:
+  - name: mini-portefeuille-db
+    plan: free
+    region: frankfurt
+    databaseName: portfolio
+    user: portfolio
+    postgresMajorVersion: "17"
+    # Liste vide : aucune connexion depuis Internet, seulement depuis les services Render.
+    ipAllowList: []
+
+services:
+  - type: web
+    name: mini-portefeuille
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Port d'écoute de l'image (ASP.NET Core écoute sur 8080) ; Render y route le trafic.
+      - key: PORT
+        value: "8080"
+      # Production : une clé JWT absente ou trop courte empêche le démarrage.
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Database__Provider
+        value: Postgres
+      # Migrations appliquées au démarrage, puis jeu d'essai fictif si la base est vide.
+      - key: Database__SeedDemoData
+        value: "true"
+      # URL postgres:// de Render, convertie par PostgresConnectionString.
+      - key: ConnectionStrings__Portfolio
+        fromDatabase:
+          name: mini-portefeuille-db
+          property: connectionString
+      # Valeur aléatoire générée par Render au premier déploiement, jamais versionnée.
+      - key: Jwt__SigningKey
+        generateValue: true
+      # L'API n'est joignable que via le proxy de Render : on lit l'adresse client qu'il transmet.
+      - key: ReverseProxy__TrustForwardedHeaders
+        value: "true"
+
+  # Serveur MCP (HTTP) pour connecter Claude aux portefeuilles, en lecture seule. Il appelle
+  # l'API publique ci-dessus au nom d'un conseiller ; il ne touche jamais la base.
+  - type: web
+    name: mini-portefeuille-mcp
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./src/Portfolio.Mcp/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      # URL publique du service mini-portefeuille, à saisir après son premier déploiement
+      # (par exemple https://mini-portefeuille.onrender.com).
+      - key: PortfolioApi__BaseUrl
+        sync: false
+      - key: PortfolioApi__UserName
+        value: amartin
+      # Mot de passe du conseiller (compte de démonstration : voir le README).
+      - key: PortfolioApi__Password
+        sync: false
+      # Clé d'accès au point /mcp, à générer en hexadécimal (openssl rand -hex 32) pour pouvoir
+      # la placer telle quelle dans une URL de connecteur.
+      - key: Mcp__AccessKey
+        sync: false

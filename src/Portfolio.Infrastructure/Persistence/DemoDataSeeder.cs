@@ -4,16 +4,22 @@ using Portfolio.Domain.Entities;
 
 namespace Portfolio.Infrastructure.Persistence;
 
+/// <summary>Chargement de données initiales dans une base vide.</summary>
+public interface IDatabaseSeeder
+{
+    Task SeedAsync(CancellationToken ct = default);
+}
+
 /// <summary>
 /// Jeu d'essai fictif chargé au démarrage si la base est vide. Les noms de clients, les
 /// quantités, les prix et les taux de change sont inventés.
 /// </summary>
-public static class DemoDataSeeder
+public sealed class DemoDataSeeder(PortfolioDbContext db, IPasswordHasher<Advisor> hasher) : IDatabaseSeeder
 {
     /// <summary>Mot de passe des comptes de démonstration (documenté dans le README, données fictives).</summary>
     public const string DemoPassword = "Demo-2026!";
 
-    public static async Task SeedAsync(PortfolioDbContext db, IPasswordHasher<Advisor> hasher, CancellationToken ct = default)
+    public async Task SeedAsync(CancellationToken ct = default)
     {
         if (await db.Currencies.AnyAsync(ct))
         {
@@ -25,8 +31,8 @@ public static class DemoDataSeeder
             new Currency { Code = "EUR", Name = "Euro", RateToChf = 0.94m },
             new Currency { Code = "USD", Name = "Dollar américain", RateToChf = 0.80m });
 
-        var alice = Advisor("amartin", "Alice Martin", hasher);
-        var bruno = Advisor("bnguyen", "Bruno Nguyen", hasher);
+        var alice = Advisor("amartin", "Alice Martin");
+        var bruno = Advisor("bnguyen", "Bruno Nguyen");
 
         alice.Clients =
         [
@@ -81,7 +87,7 @@ public static class DemoDataSeeder
         await db.SaveChangesAsync(ct);
     }
 
-    private static Advisor Advisor(string userName, string displayName, IPasswordHasher<Advisor> hasher)
+    private Advisor Advisor(string userName, string displayName)
     {
         var advisor = new Advisor { UserName = userName, DisplayName = displayName };
         advisor.PasswordHash = hasher.HashPassword(advisor, DemoPassword);

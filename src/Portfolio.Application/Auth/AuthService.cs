@@ -5,10 +5,8 @@ using Portfolio.Domain.Entities;
 
 namespace Portfolio.Application.Auth;
 
-public sealed record AuthenticatedAdvisor(int Id, string UserName, string DisplayName);
-
-/// <summary>Vérification des identifiants d'un conseiller. L'émission du jeton JWT relève de la couche API.</summary>
-public sealed class AuthService(IPortfolioDbContext db, IPasswordHasher<Advisor> hasher)
+/// <summary>Vérifie les identifiants contre les hachages en base (PBKDF2 via <see cref="IPasswordHasher{TUser}"/>).</summary>
+public sealed class AuthService(IPortfolioDbContext db, IPasswordHasher<Advisor> hasher) : IAuthService
 {
     // Hachage factice : on vérifie un mot de passe même si l'utilisateur n'existe pas, pour que
     // le temps de réponse ne révèle pas quels identifiants existent.
