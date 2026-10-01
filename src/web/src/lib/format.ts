@@ -13,8 +13,8 @@ export function formatMoney(amount: number, currency: string): string {
   }).format(amount)
 }
 
-export function formatNumber(value: number, maxDecimals = 6): string {
-  return new Intl.NumberFormat(LOCALE, { maximumFractionDigits: maxDecimals }).format(value)
+export function formatNumber(value: number, minDecimals = 0): string {
+  return new Intl.NumberFormat(LOCALE, { minimumFractionDigits: minDecimals, maximumFractionDigits: 6 }).format(value)
 }
 
 export function formatPercent(percentage: number): string {

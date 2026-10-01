@@ -93,7 +93,7 @@ export function PositionsTable({ rows, referenceCurrency, onEdit, onDelete }: Pr
               <td>{p.instrument}</td>
               <td>{ASSET_CLASS_LABELS[p.assetClass]}</td>
               <td className="num">{formatNumber(p.quantity)}</td>
-              <td className="num">{formatNumber(p.unitPrice)}</td>
+              <td className="num">{formatNumber(p.unitPrice, 2)}</td>
               <td>{p.currency}</td>
               <td className="num">{formatMoney(p.marketValue, p.currency)}</td>
               <td className="num">{formatMoney(p.referenceValue, referenceCurrency)}</td>
